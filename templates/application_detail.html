@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}درخواست {{ application.job_title }} · رزومه‌یار{% endblock %}
+{% block eyebrow %}نسخه اختصاصی{% endblock %}
+{% block page_title %}بازبینی و ارسال{% endblock %}
+{% block top_actions %}
+  <a class="btn btn--ghost" href="{{ url_for('job_detail', job_id=application.job_id) }}">
+    <svg class="icon"><use href="#i-back"></use></svg>
+    جزئیات آگهی
+  </a>
+  <a class="btn btn--outline" href="{{ url_for('applications_page') }}">آرشیو درخواست‌ها</a>
+{% endblock %}
+
+{% block content %}
+<section class="app-banner">
+  <div class="app-banner-main">
+    <div class="badge-row">
+      <span class="badge badge--app-{{ application.status }}">{{ APP_STATUSES.get(application.status, application.status) }}</span>
+      <span class="badge badge--soft">{{ 'هوش مصنوعی' if application.mode == 'ai' else 'موتور محلی' }}</span>
+      <span class="badge badge--soft">{{ 'فارسی' if language == 'fa' else 'English' }}</span>
+    </div>
+    <h2>{{ application.job_title }}</h2>
+    <div class="meta-line meta-line--wrap">
+      {% if application.job_company %}<span><svg class="icon"><use href="#i-building"></use></svg>{{ application.job_company }}</span>{% endif %}
+      {% if application.job_location %}<span><svg class="icon"><use href="#i-pin"></use></svg>{{ application.job_location }}</span>{% endif %}
+      <span><svg class="icon"><use href="#i-calendar"></use></svg>ساخته‌شده {{ application.created_at | jdatetime }}</span>
+      {% if application.sent_at %}<span><svg class="icon"><use href="#i-send"></use></svg>ارسال {{ application.sent_at | jdatetime }}</span>{% endif %}
+    </div>
+  </div>
+  <div class="app-banner-side">
+    <div class="score score--md score--{{ 'high' if application.job_score >= 70 else 'mid' if application.job_score >= 40 else 'low' }}"
+         style="--val: {{ application.job_score }}"><span>{{ application.job_score | fadigits }}</span></div>
+    <div class="app-download-buttons">
+      <a class="btn btn--outline btn--sm" href="{{ url_for('application_cv', application_id=application.id, download=1) }}">
+        <svg class="icon"><use href="#i-download"></use></svg>
+        رزومه PDF
+      </a>
+      <a class="btn btn--outline btn--sm" href="{{ url_for('application_cover', application_id=application.id, download=1) }}">
+        <svg class="icon"><use href="#i-download"></use></svg>
+        کاور لتر
+      </a>
+    </div>
+  </div>
+</section>
+
+{% if compose_error %}
+<div class="notice notice--error">
+  <svg class="icon"><use href="#i-alert"></use></svg>
+  <p>{{ compose_error }}</p>
+</div>
+{% endif %}
+
+<div class="app-layout">
+  <div class="stack">
+    <section class="card card--preview">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">پیش‌نمایش نهایی</span>
+          <h3>فایل‌های ارسالی</h3>
+        </div>
+        <div class="segmented segmented--sm" data-tabs>
+          <button class="seg-btn is-active" type="button" data-tab="preview-cv">رزومه</button>
+          <button class="seg-btn" type="button" data-tab="preview-cover">کاور لتر</button>
+        </div>
+      </div>
+      <div class="preview-frame">
+        <div data-tab-panel="preview-cv">
+          <iframe title="پیش‌نمایش رزومه" src="{{ url_for('application_cv', application_id=application.id) }}#view=FitH&navpanes=0" loading="lazy"></iframe>
+        </div>
+        <div data-tab-panel="preview-cover" hidden>
+          <iframe title="پیش‌نمایش کاور لتر" src="{{ url_for('application_cover', application_id=application.id) }}#view=FitH&navpanes=0" loading="lazy"></iframe>
+        </div>
+      </div>
+      <div class="preview-foot">
+        <span><svg class="icon"><use href="#i-info"></use></svg>اگر پیش‌نمایش در مرورگر نمایش داده نشد، فایل را دانلود کنید.</span>
+        <a class="inline-link" href="{{ url_for('application_cv', application_id=application.id, download=1) }}">دانلود رزومه PDF</a>
+      </div>
+    </section>
+
+    {% if application.status != 'sent' %}
+    <details class="card edit-panel">
+      <summary>
+        <span class="summary-main">
+          <span class="soft-icon"><svg class="icon"><use href="#i-edit"></use></svg></span>
+          <span>
+            <strong>ویرایش پیش‌نویس</strong>
+            <small>خلاصه، مهارت‌ها و کاور لتر را قبل از ارسال نهایی کنید.</small>
+          </span>
+        </span>
+        <svg class="icon summary-chevron"><use href="#i-chevron"></use></svg>
+      </summary>
+      <form class="edit-form" method="post" action="{{ url_for('save_application', application_id=application.id) }}" data-busy>
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="form-grid">
+          <label class="field span-2">
+            <span>عنوان حرفه‌ای نسخه اختصاصی</span>
+            <input type="text" name="headline" value="{{ application.headline }}" maxlength="200">
+          </label>
+          <label class="field span-2">
+            <span>خلاصه حرفه‌ای</span>
+            <textarea name="summary" rows="4" maxlength="2500">{{ application.summary }}</textarea>
+          </label>
+          <label class="field span-2">
+            <span>مهارت‌ها (به ترتیب اهمیت در این آگهی)</span>
+            <input type="text" name="skills" value="{{ application.skills_list | join('، ') }}" maxlength="2000">
+            <small class="hint">فقط مهارت‌های واقعی خود را نگه دارید؛ موارد جدید از پروفایل قابل افزودن است.</small>
+          </label>
+          <label class="field span-2">
+            <span>متن کاور لتر</span>
+            <textarea name="cover_letter" rows="16" maxlength="12000">{{ application.cover_letter }}</textarea>
+            <small class="hint">با ذخیره، فایل PDF کاور لتر دوباره ساخته می‌شود.</small>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn--primary" type="submit">
+            <svg class="icon"><use href="#i-check"></use></svg>
+            ذخیره و ساخت دوباره PDF
+          </button>
+          <span class="form-hint">تجربه‌ها و تحصیلات از پروفایل خوانده می‌شوند.</span>
+        </div>
+      </form>
+    </details>
+
+    <details class="card edit-panel">
+      <summary>
+        <span class="summary-main">
+          <span class="soft-icon is-gold"><svg class="icon"><use href="#i-refresh"></use></svg></span>
+          <span>
+            <strong>بازتولید کامل متن‌ها</strong>
+            <small>نسخه جدید جایگزین ویرایش‌های فعلی می‌شود.</small>
+          </span>
+        </span>
+        <svg class="icon summary-chevron"><use href="#i-chevron"></use></svg>
+      </summary>
+      <form class="edit-form" method="post" action="{{ url_for('regenerate_application', application_id=application.id) }}"
+            data-busy data-confirm="متن و کاور لتر فعلی با نسخه تازه جایگزین شود؟">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="form-grid">
+          <label class="field">
+            <span>زبان خروجی</span>
+            <select name="language">
+              <option value="fa" {{ 'selected' if language == 'fa' }}>فارسی</option>
+              <option value="en" {{ 'selected' if language == 'en' }}>انگلیسی</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>روش تولید</span>
+            <select name="mode">
+              <option value="auto">خودکار (پیشنهادی)</option>
+              {% if ai_ready %}<option value="ai">هوش مصنوعی</option>{% endif %}
+              <option value="local">موتور محلی</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn--outline" type="submit">
+            <svg class="icon"><use href="#i-refresh"></use></svg>
+            بازتولید نسخه
+          </button>
+        </div>
+      </form>
+    </details>
+    {% endif %}
+
+    <div class="danger-zone">
+      <form method="post" action="{{ url_for('delete_application_route', application_id=application.id) }}"
+            data-confirm="این درخواست، PDFها و سابقه ارسال آن برای همیشه حذف شود؟">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn--danger-ghost btn--sm" type="submit">
+          <svg class="icon"><use href="#i-trash"></use></svg>
+          حذف این درخواست
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <aside class="side-stack">
+    {% if application.status == 'sent' %}
+    <section class="card card--accent">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">ثبت نهایی</span>
+          <h3>درخواست ارسال شد</h3>
+        </div>
+        <span class="soft-icon is-green"><svg class="icon"><use href="#i-check-circle"></use></svg></span>
+      </div>
+      <dl class="mini-dl">
+        <div><dt>گیرنده</dt><dd>{{ application.sent_to }}</dd></div>
+        <div><dt>زمان ارسال</dt><dd>{{ application.sent_at | jdatetime }}</dd></div>
+        <div><dt>موضوع</dt><dd>{{ application.sent_subject }}</dd></div>
+        <div><dt>پیوست‌ها</dt><dd>{{ application.sent_files | join('، ') }}</dd></div>
+      </dl>
+      <div class="mini-note">
+        <svg class="icon"><use href="#i-folder"></use></svg>
+        <span>نسخه ارسال‌شده در آرشیو باقی می‌ماند. برای فرصت بعدی، نسخه‌ای تازه بسازید.</span>
+      </div>
+      <details class="sent-body">
+        <summary>متن ایمیل ارسال‌شده</summary>
+        <pre>{{ application.sent_body }}</pre>
+      </details>
+    </section>
+    {% else %}
+    <section class="card card--send">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">تأیید نهایی</span>
+          <h3>ارسال ایمیل درخواست</h3>
+        </div>
+        <span class="soft-icon is-green"><svg class="icon"><use href="#i-send"></use></svg></span>
+      </div>
+      {% if smtp_ready %}
+      <div class="mini-note mini-note--ok">
+        <svg class="icon"><use href="#i-check-circle"></use></svg>
+        <span>سرور ایمیل پیکربندی شده است. پیش از ارسال، گیرنده و پیوست‌ها را کنترل کنید.</span>
+      </div>
+      {% else %}
+      <div class="notice notice--warning notice--inline">
+        <svg class="icon"><use href="#i-alert"></use></svg>
+        <p>برای ارسال مستقیم، ابتدا <a href="{{ url_for('settings_page') }}#smtp">تنظیمات SMTP</a> را کامل کنید. می‌توانید بسته ZIP را هم دانلود و دستی ارسال کنید.</p>
+      </div>
+      {% endif %}
+      <form method="post" action="{{ url_for('send_application', application_id=application.id) }}"
+            data-busy data-confirm="این ایمیل همراه با فایل‌های انتخاب‌شده برای گیرنده ارسال شود؟">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <label class="field">
+          <span>ایمیل گیرنده <b class="req">*</b></span>
+          <input class="ltr" type="email" name="to" value="{{ compose.to }}" placeholder="hr@company.com" required dir="ltr">
+        </label>
+        <label class="field">
+          <span>موضوع</span>
+          <input type="text" name="subject" value="{{ compose.subject }}" maxlength="300" required>
+        </label>
+        <label class="field">
+          <span>متن ایمیل</span>
+          <textarea name="body" id="email-body-input" rows="10" required>{{ compose.body }}</textarea>
+          <button class="text-btn" type="button" data-copy-target="email-body-input">کپی متن ایمیل</button>
+        </label>
+
+        <div class="attachment-box">
+          <div class="attachment-head">
+            <strong>پیوست‌ها</strong>
+            <span>رزومه و کاور لتر همیشه پیوست می‌شوند.</span>
+          </div>
+          <div class="attachment-row">
+            <span class="doc-icon"><svg class="icon"><use href="#i-file"></use></svg></span>
+            <span class="attachment-main"><strong>CV.pdf</strong><small>رزومه اختصاصی</small></span>
+            <span class="fixed-tag">الزامی</span>
+          </div>
+          <div class="attachment-row">
+            <span class="doc-icon"><svg class="icon"><use href="#i-mail"></use></svg></span>
+            <span class="attachment-main"><strong>Cover-Letter.pdf</strong><small>کاور لتر اختصاصی</small></span>
+            <span class="fixed-tag">الزامی</span>
+          </div>
+          {% for doc in documents %}
+          <label class="attachment-row attachment-row--select">
+            <span class="doc-icon"><svg class="icon"><use href="#i-folder"></use></svg></span>
+            <span class="attachment-main"><strong>{{ doc.title }}</strong><small>{{ doc.kind }} · {{ doc.size | filesize }}</small></span>
+            <input type="checkbox" name="doc_ids" value="{{ doc.id }}" checked>
+          </label>
+          {% endfor %}
+          {% if not documents %}
+          <p class="muted-text small-note">مدرک اضافه‌ای در آرشیو نیست. می‌توانید از <a href="{{ url_for('profile_page') }}#documents">پروفایل</a> اضافه کنید.</p>
+          {% endif %}
+        </div>
+
+        <div class="send-actions">
+          <button class="btn btn--gold btn--block" type="submit" {{ 'disabled' if not smtp_ready }}>
+            <svg class="icon"><use href="#i-send"></use></svg>
+            ارسال درخواست
+          </button>
+          <button class="btn btn--outline btn--block" type="submit"
+                  formaction="{{ url_for('application_package', application_id=application.id) }}"
+                  formnovalidate data-skip-confirm data-skip-busy>
+            <svg class="icon"><use href="#i-download"></use></svg>
+            دانلود بسته ZIP (بدون ارسال)
+          </button>
+          {% if not smtp_ready %}
+          <a class="btn btn--ghost btn--sm" href="{{ url_for('settings_page') }}#smtp">تنظیم ایمیل حالا</a>
+          {% endif %}
+        </div>
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">نگاه تحلیلی</span>
+          <h3>چرا این نسخه؟</h3>
+        </div>
+      </div>
+      <div class="analysis-mini">
+        <h4>مهارت‌های هم‌راستا</h4>
+        <div class="chip-row chip-row--wrap">
+          {% for skill in application.job_matched_skills[:8] %}
+          <span class="chip chip--match">{{ skill }}</span>
+          {% else %}
+          <span class="muted-text">مهارت مشترکی ثبت نشده است.</span>
+          {% endfor %}
+        </div>
+        <h4>کلیدواژه‌های آگهی که در پروفایل نیست</h4>
+        <div class="chip-row chip-row--wrap">
+          {% for kw in application.job_missing_keywords[:8] %}
+          <span class="chip chip--miss">{{ kw }}</span>
+          {% else %}
+          <span class="muted-text">موردی پیدا نشد.</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="mini-note">
+        <svg class="icon"><use href="#i-shield"></use></svg>
+        <span>هیچ مهارت یا دستاوردی به‌صورت خودکار به پروفایل اضافه نمی‌شود؛ متن‌ها فقط از اطلاعات واقعی شما ساخته می‌شوند.</span>
+      </div>
+    </section>
+  </aside>
+</div>
+{% endblock %}

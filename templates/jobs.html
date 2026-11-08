@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}آگهی‌های شغلی · رزومه‌یار{% endblock %}
+{% block eyebrow %}کشف و ارزیابی{% endblock %}
+{% block page_title %}آگهی‌های شغلی{% endblock %}
+{% block top_actions %}
+  <form method="post" action="{{ url_for('recalculate_jobs') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn btn--ghost" type="submit">
+      <svg class="icon"><use href="#i-refresh"></use></svg>
+      بازمحاسبه امتیازها
+    </button>
+  </form>
+  <a class="btn btn--primary" href="#import">
+    <svg class="icon"><use href="#i-plus"></use></svg>
+    افزودن آگهی
+  </a>
+{% endblock %}
+
+{% block content %}
+{% if completeness.percent < 50 %}
+<div class="notice notice--warning">
+  <svg class="icon"><use href="#i-alert"></use></svg>
+  <p>امتیاز تطبیق دقیق‌تر می‌شود اگر <a href="{{ url_for('profile_page') }}">پروفایل و مهارت‌ها</a> را کامل کنید. موارد ناقص: {{ completeness.missing[:4] | join('، ') }}</p>
+</div>
+{% endif %}
+
+<section class="card" id="import">
+  <div class="card-head">
+    <div>
+      <span class="card-kicker">ورودی جدید</span>
+      <h3>افزودن فرصت شغلی</h3>
+      <p class="card-sub">لینک آگهی را بدهید تا متنش خوانده شود، یا متن را مستقیم بچسبانید.</p>
+    </div>
+    <span class="soft-icon is-gold"><svg class="icon"><use href="#i-target"></use></svg></span>
+  </div>
+
+  <div class="segmented" data-tabs>
+    <button class="seg-btn is-active" type="button" data-tab="import-url">از لینک یا متن</button>
+    <button class="seg-btn" type="button" data-tab="discover">کشف خودکار</button>
+    <button class="seg-btn" type="button" data-tab="search-sites">جستجو در سایت‌ها</button>
+  </div>
+
+  <div data-tab-panel="import-url">
+    <form method="post" action="{{ url_for('import_job') }}" data-busy data-import-form>
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div class="url-row">
+        <label class="field">
+          <span>لینک آگهی (اختیاری)</span>
+          <input class="ltr" type="url" name="url" id="job-url" placeholder="https://jobinja.ir/..." dir="ltr">
+        </label>
+        <button class="btn btn--outline" type="button" data-extract-job>
+          <svg class="icon"><use href="#i-download"></use></svg>
+          استخراج از لینک
+        </button>
+      </div>
+      <p class="inline-status" data-extract-status></p>
+      <div class="form-grid">
+        <label class="field">
+          <span>عنوان شغلی <b class="req">*</b></span>
+          <input type="text" name="title" id="job-title" placeholder="کارشناس حسابداری" maxlength="300" required>
+        </label>
+        <label class="field">
+          <span>شرکت</span>
+          <input type="text" name="company" id="job-company" placeholder="نام شرکت" maxlength="200">
+        </label>
+        <label class="field">
+          <span>موقعیت</span>
+          <input type="text" name="location" id="job-location" placeholder="تهران، دورکاری" maxlength="150">
+        </label>
+        <label class="field">
+          <span>شیوه همکاری</span>
+          <select name="work_mode">
+            <option value="">تشخیص خودکار از متن</option>
+            {% for key, label in WORK_MODES.items() %}
+            <option value="{{ key }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="field">
+          <span>نوع قرارداد یا همکاری</span>
+          <select name="employment_type">
+            <option value="">تشخیص خودکار از متن</option>
+            {% for key, label in EMPLOYMENT_TYPES.items() %}
+            <option value="{{ key }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="field">
+          <span>ایمیل تماس (اختیاری)</span>
+          <input class="ltr" type="email" name="contact_email" id="job-contact" placeholder="hr@company.com" maxlength="250" dir="ltr">
+          <small class="hint">برای ارسال ایمیل درخواست استفاده می‌شود.</small>
+        </label>
+        <label class="field">
+          <span>زبان آگهی</span>
+          <select name="language" id="job-language">
+            <option value="auto">تشخیص خودکار</option>
+            <option value="fa">فارسی</option>
+            <option value="en">انگلیسی</option>
+          </select>
+        </label>
+        <div class="field field--plain">
+          <span>راهنما</span>
+          <div class="hint-box">اگر لینک در دسترس نبود، متن کامل آگهی را پایین بچسبانید.</div>
+        </div>
+        <label class="field span-2">
+          <span>متن آگهی</span>
+          <textarea name="description" id="job-description" rows="7" placeholder="شرح وظایف، نیازمندی‌ها و شرایط آگهی را اینجا بچسبانید." required></textarea>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn--primary" type="submit">
+          <svg class="icon"><use href="#i-plus"></use></svg>
+          ذخیره و امتیازدهی
+        </button>
+        <span class="form-hint">آگهی‌های تکراری بر اساس لینک شناسایی می‌شوند.</span>
+      </div>
+    </form>
+  </div>
+
+  <div data-tab-panel="discover" hidden>
+    <form method="post" action="{{ url_for('discover_jobs') }}" data-busy>
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div class="form-grid">
+        <label class="field">
+          <span>منبع آگهی</span>
+          <select name="source">
+            {% for key, info in sources.items() %}
+            <option value="{{ key }}">{{ info.name }} — {{ info.note }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="field">
+          <span>کلیدواژه (انگلیسی)</span>
+          <input class="ltr" type="text" name="discover_query" placeholder="accountant, financial analyst, python" dir="ltr">
+        </label>
+        <label class="field">
+          <span>تعداد نتیجه</span>
+          <select name="limit">
+            <option value="5">۵ آگهی</option>
+            <option value="8" selected>۸ آگهی</option>
+            <option value="12">۱۲ آگهی</option>
+            <option value="20">۲۰ آگهی</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>شیوه همکاری</span>
+          <select name="work_mode">
+            <option value="">همه</option>
+            {% for key, label in WORK_MODES.items() %}
+            <option value="{{ key }}" {{ 'selected' if key == 'remote' and prefs.get('work_modes', []) == [key] }}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <div class="notice notice--info notice--inline">
+        <svg class="icon"><use href="#i-info"></use></svg>
+        <p>این منابع آگهی‌های ریموت/بین‌المللی (انگلیسی) دارند. برای شغل حضوری یا ترکیبی از تب «جستجو در سایت‌ها» استفاده کنید. آگهی‌ها با لینک و منبع اصلی ذخیره و با پروفایل شما امتیازدهی می‌شوند.</p>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn--primary" type="submit">
+          <svg class="icon"><use href="#i-zap"></use></svg>
+          دریافت و ذخیره آگهی‌ها
+        </button>
+        <span class="form-hint">دریافت از اینترنت انجام می‌شود و ممکن است چند ثانیه طول بکشد.</span>
+      </div>
+    </form>
+  </div>
+
+  <div data-tab-panel="search-sites" hidden>
+    <p class="section-note">جستجوها بر اساس عنوان‌های شغلی، شهرها و نوع همکاری موردنظر شما ساخته شده‌اند. نتیجه را در سایت باز کنید، سپس لینک آگهی را برای تحلیل و ساخت نسخه اختصاصی وارد کنید.</p>
+    {% set pref_modes = prefs.get('work_modes', []) %}
+    {% set pref_types = prefs.get('employment_types', []) %}
+    {% if pref_modes or pref_types %}
+    <div class="mini-note">
+      <svg class="icon"><use href="#i-target"></use></svg>
+      <span>ترجیح فعلی شما: {% for key in pref_modes %}{{ WORK_MODES.get(key, key) }}{{ '، ' if not loop.last }}{% endfor %}{% if pref_modes and pref_types %} · {% endif %}{% for key in pref_types %}{{ EMPLOYMENT_TYPES.get(key, key) }}{{ '، ' if not loop.last }}{% endfor %} — <a href="{{ url_for('profile_page') }}">ویرایش</a></span>
+    </div>
+    {% endif %}
+    <div class="link-grid">
+      {% for link in search_links %}
+      <a class="link-card" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+        <span class="link-mark">{{ link.name[0] }}</span>
+        <span class="link-main">
+          <strong>{{ link.name }}</strong>
+          <small>{{ link.note }}</small>
+        </span>
+        <svg class="icon"><use href="#i-external"></use></svg>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="mini-note">
+      <svg class="icon"><use href="#i-help"></use></svg>
+      <span>ارسال خودکار فرم در سایت‌های کاریابی انجام نمی‌شود؛ بسته‌ی آماده (PDF و ZIP) را می‌سازیم تا با کنترل کامل خودتان ارسال کنید.</span>
+    </div>
+  </div>
+</section>
+
+<div class="section-heading" id="job-list">
+  <div>
+    <span class="card-kicker">آرشیو تحلیل‌شده</span>
+    <h2>فهرست آگهی‌ها</h2>
+  </div>
+  <form class="filter-form" method="get" action="{{ url_for('jobs_page') }}">
+    <label class="search-field">
+      <svg class="icon"><use href="#i-search"></use></svg>
+      <input type="search" name="q" value="{{ query }}" placeholder="جستجو در عنوان، شرکت یا متن">
+    </label>
+    <select name="status" class="select-compact">
+      <option value="">همه وضعیت‌ها</option>
+      {% for key, label in JOB_STATUSES.items() %}
+      <option value="{{ key }}" {{ 'selected' if status == key }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="mode" class="select-compact">
+      <option value="">همه شیوه‌ها</option>
+      {% for key, label in WORK_MODES.items() %}
+      <option value="{{ key }}" {{ 'selected' if work_mode == key }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="type" class="select-compact">
+      <option value="">همه قراردادها</option>
+      {% for key, label in EMPLOYMENT_TYPES.items() %}
+      <option value="{{ key }}" {{ 'selected' if employment_type == key }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn--outline btn--sm" type="submit">اعمال</button>
+  </form>
+</div>
+
+{% set pref_modes = prefs.get('work_modes', []) %}
+{% set pref_types = prefs.get('employment_types', []) %}
+{% if pref_modes or pref_types %}
+<div class="pref-strip">
+  <svg class="icon"><use href="#i-target"></use></svg>
+  <span>ترجیح شما:
+    {% for key in pref_modes %}<strong>{{ WORK_MODES.get(key, key) }}</strong>{{ '، ' if not loop.last }}{% endfor %}
+    {% if pref_modes and pref_types %} · {% endif %}
+    {% for key in pref_types %}<strong>{{ EMPLOYMENT_TYPES.get(key, key) }}</strong>{{ '، ' if not loop.last }}{% endfor %}
+  </span>
+  <a class="inline-link" href="{{ url_for('profile_page') }}#preferences">ویرایش ترجیح</a>
+</div>
+{% endif %}
+
+{% if jobs %}
+<div class="job-cards">
+  {% for job in jobs %}
+  <article class="job-card">
+    <div class="score score--md score--{{ 'high' if job.score >= 70 else 'mid' if job.score >= 40 else 'low' }}"
+         style="--val: {{ job.score }}"><span>{{ job.score | fadigits }}</span></div>
+    <div class="job-card-main">
+      <div class="job-card-top">
+        <h3><a href="{{ url_for('job_detail', job_id=job.id) }}">{{ job.title }}</a></h3>
+        <span class="badge badge--{{ job.status }}">{{ JOB_STATUSES.get(job.status, job.status) }}</span>
+        {% if job.application_id %}
+        <span class="badge badge--app-{{ job.application_status }}">درخواست: {{ APP_STATUSES.get(job.application_status, job.application_status) }}</span>
+        {% endif %}
+      </div>
+      <div class="meta-line meta-line--wrap">
+        {% if job.company %}<span><svg class="icon"><use href="#i-building"></use></svg>{{ job.company }}</span>{% endif %}
+        {% if job.location %}<span><svg class="icon"><use href="#i-pin"></use></svg>{{ job.location }}</span>{% endif %}
+        <span><svg class="icon"><use href="#i-calendar"></use></svg>{{ job.created_at | jdate }}</span>
+        {% if job.source %}<span class="source-tag">{{ job.source }}</span>{% endif %}
+        {% if job.work_mode %}<span class="badge badge--soft">{{ WORK_MODES.get(job.work_mode, job.work_mode) }}</span>{% endif %}
+        {% if job.employment_type %}<span class="badge badge--soft">{{ EMPLOYMENT_TYPES.get(job.employment_type, job.employment_type) }}</span>{% endif %}
+      </div>
+      <p class="job-snippet">{{ job.description | shorten(190) }}</p>
+      <div class="chip-row">
+        {% for skill in job.matched_skills[:4] %}
+        <span class="chip chip--match">{{ skill }}</span>
+        {% endfor %}
+        {% if job.matched_skills | length > 4 %}
+        <span class="chip chip--more">+{{ (job.matched_skills | length - 4) | fadigits }}</span>
+        {% endif %}
+        {% if not job.matched_skills %}
+          {% for kw in job.missing_keywords[:3] %}
+          <span class="chip chip--miss">{{ kw }}</span>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="job-card-actions">
+      <a class="btn btn--primary btn--sm" href="{{ url_for('job_detail', job_id=job.id) }}">
+        {% if job.application_id %}مشاهده درخواست{% else %}تحلیل و ساخت نسخه{% endif %}
+      </a>
+      {% if job.url %}
+      <a class="btn btn--ghost btn--sm" href="{{ job.url }}" target="_blank" rel="noopener noreferrer">
+        <svg class="icon"><use href="#i-external"></use></svg>
+        آگهی اصلی
+      </a>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <span class="empty-icon"><svg class="icon"><use href="#i-briefcase"></use></svg></span>
+  <h3>{% if query or status or work_mode or employment_type %}آگهی‌ای با این فیلتر پیدا نشد{% else %}اولین فرصت شغلی را اضافه کنید{% endif %}</h3>
+  <p>{% if query or status or work_mode or employment_type %}فیلترها را پاک کنید یا آگهی تازه‌ای اضافه کنید.{% else %}لینک آگهی را وارد کنید یا از فیدهای موجود، فرصت‌های مرتبط را دریافت کنید.{% endif %}</p>
+  <div class="empty-actions">
+    <a class="btn btn--primary" href="#import">افزودن آگهی</a>
+    {% if query or status or work_mode or employment_type %}<a class="btn btn--ghost" href="{{ url_for('jobs_page') }}">حذف فیلترها</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+
+<p class="data-note">
+  <svg class="icon"><use href="#i-info"></use></svg>
+  منبع فیدهای خودکار: RemoteOK، Arbeitnow و Jobicy؛ اطلاعات و لینک اصلی هر آگهی ذخیره می‌شود.
+</p>
+{% endblock %}

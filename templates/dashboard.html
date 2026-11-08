@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}داشبورد · رزومه‌یار{% endblock %}
+{% block eyebrow %}نمای کلی{% endblock %}
+{% block page_title %}داشبورد{% endblock %}
+{% block top_actions %}
+  <a class="btn btn--primary" href="{{ url_for('jobs_page') }}#import">
+    <svg class="icon"><use href="#i-plus"></use></svg>
+    افزودن آگهی
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <span class="hero-eyebrow">
+      <svg class="icon"><use href="#i-zap"></use></svg>
+      از رزومه تا ارسال، در یک مسیر
+    </span>
+    <h2>
+      {% if profile.full_name %}سلام {{ profile.full_name }}{% else %}به رزومه‌یار خوش آمدید{% endif %}
+    </h2>
+    <p>
+      رزومه و مدارک را یک‌بار ثبت کنید؛ برای هر آگهی، نسخه‌ای متناسب با همان نقش می‌سازیم و
+      متن ایمیل را هم آماده می‌کنیم. ارسال نهایی همیشه با تأیید شما انجام می‌شود.
+    </p>
+    <div class="hero-actions">
+      {% if completeness.percent < 70 %}
+        <a class="btn btn--gold" href="{{ url_for('profile_page') }}">
+          <svg class="icon"><use href="#i-user"></use></svg>
+          تکمیل پروفایل
+        </a>
+      {% else %}
+        <a class="btn btn--gold" href="{{ url_for('jobs_page') }}#import">
+          <svg class="icon"><use href="#i-target"></use></svg>
+          شروع با یک آگهی
+        </a>
+      {% endif %}
+      <a class="btn btn--ghost-light" href="#recent-jobs">آخرین آگهی‌ها</a>
+    </div>
+  </div>
+  <div class="hero-progress">
+    <div class="score score--hero score--{{ 'high' if completeness.percent >= 75 else 'mid' if completeness.percent >= 40 else 'low' }}"
+         style="--val: {{ completeness.percent }}">
+      <span>{{ completeness.percent | fadigits }}٪</span>
+    </div>
+    <strong>آمادگی پروفایل</strong>
+    <small>{{ completeness.done | fadigits }} از {{ completeness.total | fadigits }} مورد کامل است</small>
+    {% if completeness.missing %}
+    <ul class="hero-todo">
+      {% for item in completeness.missing[:3] %}
+      <li><svg class="icon"><use href="#i-alert"></use></svg>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="hero-complete">
+      <svg class="icon"><use href="#i-check-circle"></use></svg>
+      پروفایل شما آماده است
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="stat-grid">
+  <a class="stat-card" href="{{ url_for('jobs_page') }}">
+    <span class="stat-icon"><svg class="icon"><use href="#i-briefcase"></use></svg></span>
+    <div><strong>{{ counts.jobs | fadigits }}</strong><span>آگهی ذخیره‌شده</span></div>
+    <small>{{ counts.new_jobs | fadigits }} آگهی جدید</small>
+  </a>
+  <a class="stat-card" href="{{ url_for('applications_page', status='draft') }}">
+    <span class="stat-icon is-gold"><svg class="icon"><use href="#i-edit"></use></svg></span>
+    <div><strong>{{ counts.drafts | fadigits }}</strong><span>در انتظار ارسال</span></div>
+    <small>نسخه اختصاصی آماده</small>
+  </a>
+  <a class="stat-card" href="{{ url_for('applications_page', status='sent') }}">
+    <span class="stat-icon is-green"><svg class="icon"><use href="#i-send"></use></svg></span>
+    <div><strong>{{ counts.sent | fadigits }}</strong><span>درخواست ارسال‌شده</span></div>
+    <small>ثبت‌شده در آرشیو</small>
+  </a>
+  <a class="stat-card" href="{{ url_for('profile_page') }}#documents">
+    <span class="stat-icon is-navy"><svg class="icon"><use href="#i-folder"></use></svg></span>
+    <div><strong>{{ counts.documents | fadigits }}</strong><span>مدرک و فایل</span></div>
+    <small>رزومه و مدارک پیوست</small>
+  </a>
+</section>
+
+<div class="grid grid--2-1">
+  <section class="card" id="recent-jobs">
+    <div class="card-head">
+      <div>
+        <span class="card-kicker">فرصت‌ها</span>
+        <h3>آخرین آگهی‌ها</h3>
+      </div>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('jobs_page') }}">همه آگهی‌ها</a>
+    </div>
+    {% if recent_jobs %}
+    <div class="job-list">
+      {% for job in recent_jobs %}
+      <a class="job-row" href="{{ url_for('job_detail', job_id=job.id) }}">
+        <div class="score score--sm score--{{ 'high' if job.score >= 70 else 'mid' if job.score >= 40 else 'low' }}"
+             style="--val: {{ job.score }}"><span>{{ job.score | fadigits }}</span></div>
+        <div class="job-row-main">
+          <strong>{{ job.title }}</strong>
+          <span class="meta-line">
+            {% if job.company %}{{ job.company }}{% endif %}
+            {% if job.location %}<i></i>{{ job.location }}{% endif %}
+            <i></i>{{ job.created_at | jdate }}
+          </span>
+        </div>
+        <span class="badge badge--{{ job.status }}">{{ JOB_STATUSES.get(job.status, job.status) }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty empty--compact">
+      <span class="empty-icon"><svg class="icon"><use href="#i-briefcase"></use></svg></span>
+      <h4>هنوز آگهی‌ای اضافه نکرده‌اید</h4>
+      <p>لینک آگهی را وارد کنید یا متن آن را بچسبانید تا امتیاز تطبیق را ببینید.</p>
+      <a class="btn btn--primary btn--sm" href="{{ url_for('jobs_page') }}#import">افزودن اولین آگهی</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <span class="card-kicker">مسیر شما</span>
+        <h3>قدم‌های پیشنهادی</h3>
+      </div>
+    </div>
+    <ol class="steps">
+      {% for step in steps %}
+      <li class="{{ 'is-done' if step.done }}">
+        <span class="step-dot">
+          <svg class="icon"><use href="#i-{{ 'check' if step.done else 'plus' }}"></use></svg>
+        </span>
+        <a href="{{ step.url }}">{{ step.label }}</a>
+      </li>
+      {% endfor %}
+    </ol>
+    <div class="tip-box">
+      <svg class="icon"><use href="#i-info"></use></svg>
+      <p>کیفیت خروجی به پروفایل شما وابسته است؛ تجربه‌ها را با دستاوردهای واقعی و قابل اندازه‌گیری بنویسید.</p>
+    </div>
+  </section>
+</div>
+
+<div class="grid grid--2">
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <span class="card-kicker">آرشیو</span>
+        <h3>درخواست‌های اخیر</h3>
+      </div>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('applications_page') }}">آرشیو کامل</a>
+    </div>
+    {% if recent_apps %}
+    <div class="app-mini-list">
+      {% for app in recent_apps %}
+      <a class="app-mini" href="{{ url_for('application_detail', application_id=app.id) }}">
+        <span class="file-badge"><svg class="icon"><use href="#i-file"></use></svg></span>
+        <span class="app-mini-main">
+          <strong>{{ app.job_title }}</strong>
+          <small>{{ app.job_company or 'شرکت ثبت نشده' }} · {{ app.updated_at | jdate }}</small>
+        </span>
+        <span class="badge badge--app-{{ app.status }}">{{ APP_STATUSES.get(app.status, app.status) }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty empty--compact">
+      <span class="empty-icon"><svg class="icon"><use href="#i-doc"></use></svg></span>
+      <h4>درخواستی ساخته نشده</h4>
+      <p>از صفحه هر آگهی، رزومه و کاور لتر اختصاصی بسازید.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <span class="card-kicker">میان‌بر</span>
+        <h3>دسترسی سریع</h3>
+      </div>
+    </div>
+    <div class="quick-grid">
+      <a class="quick-tile" href="{{ url_for('jobs_page') }}#discover">
+        <span class="quick-icon"><svg class="icon"><use href="#i-zap"></use></svg></span>
+        <strong>کشف آگهی</strong>
+        <small>دریافت از فیدهای ریموت</small>
+      </a>
+      <a class="quick-tile" href="{{ url_for('profile_page') }}#cv">
+        <span class="quick-icon"><svg class="icon"><use href="#i-upload"></use></svg></span>
+        <strong>بارگذاری رزومه</strong>
+        <small>خواندن اطلاعات از فایل</small>
+      </a>
+      <a class="quick-tile" href="{{ url_for('settings_page') }}#smtp">
+        <span class="quick-icon"><svg class="icon"><use href="#i-mail"></use></svg></span>
+        <strong>تنظیم ایمیل</strong>
+        <small>SMTP برای ارسال نهایی</small>
+      </a>
+      <a class="quick-tile" href="{{ url_for('profile_page') }}#documents">
+        <span class="quick-icon"><svg class="icon"><use href="#i-folder"></use></svg></span>
+        <strong>مدارک من</strong>
+        <small>مدارک تحصیلی و گواهی‌ها</small>
+      </a>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>خطا {{ code }} · رزومه‌یار</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body class="error-body">
+  <main class="error-card">
+    <a class="brand brand--centered" href="{{ url_for('dashboard') }}">
+      <span class="brand-mark">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l1.6 4.6L18 9.2l-4.4 1.6L12 15.4l-1.6-4.6L6 9.2l4.4-1.6L12 3Z"/></svg>
+      </span>
+      <span class="brand-text"><strong>رزومه‌یار</strong><small>دستیار هوشمند استخدام</small></span>
+    </a>
+    <span class="error-code">{{ code | fadigits }}</span>
+    <h1>مسیر پیدا نشد</h1>
+    <p>{{ message }}</p>
+    <div class="empty-actions">
+      <a class="btn btn--primary" href="{{ url_for('dashboard') }}">بازگشت به داشبورد</a>
+      <a class="btn btn--ghost" href="{{ url_for('jobs_page') }}">آگهی‌ها</a>
+    </div>
+  </main>
+</body>
+</html>

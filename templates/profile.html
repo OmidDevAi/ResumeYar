@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% block title %}پروفایل و مدارک · رزومه‌یار{% endblock %}
+{% block eyebrow %}هویت حرفه‌ای شما{% endblock %}
+{% block page_title %}پروفایل و مدارک{% endblock %}
+{% block top_actions %}
+  <button class="btn btn--primary" type="submit" form="profile-form">
+    <svg class="icon"><use href="#i-check"></use></svg>
+    ذخیره پروفایل
+  </button>
+{% endblock %}
+
+{% block content %}
+<div class="notice notice--info">
+  <svg class="icon"><use href="#i-info"></use></svg>
+  <p>اطلاعات این صفحه، پایه ساخت همه رزومه‌های اختصاصی است. هر چه دقیق‌تر باشد، خروجی به آگهی نزدیک‌تر می‌شود.</p>
+</div>
+
+<div class="profile-layout">
+  <form id="profile-form" class="stack" method="post" action="{{ url_for('save_profile_route') }}" data-busy>
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="experiences_json" id="experiences-json">
+    <input type="hidden" name="education_json" id="education-json">
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">شناسنامه</span>
+          <h3>اطلاعات پایه</h3>
+          <p class="card-sub">همان‌طور که در رزومه و ایمیل رسمی می‌خواهید دیده شود.</p>
+        </div>
+        <span class="soft-icon"><svg class="icon"><use href="#i-user"></use></svg></span>
+      </div>
+      <div class="form-grid">
+        <label class="field">
+          <span>نام و نام خانوادگی</span>
+          <input type="text" name="full_name" value="{{ profile.full_name }}" placeholder="مثلاً سارا محمدی" maxlength="150">
+        </label>
+        <label class="field">
+          <span>عنوان شغلی</span>
+          <input type="text" name="headline" value="{{ profile.headline }}" placeholder="کارشناس ارشد حسابداری" maxlength="200">
+        </label>
+        <label class="field">
+          <span>ایمیل</span>
+          <input class="ltr" type="email" name="email" value="{{ profile.email }}" placeholder="you@example.com" maxlength="200" dir="ltr">
+        </label>
+        <label class="field">
+          <span>شماره تماس</span>
+          <input class="ltr" type="text" name="phone" value="{{ profile.phone }}" placeholder="0912 000 0000" maxlength="80" dir="ltr">
+        </label>
+        <label class="field">
+          <span>شهر</span>
+          <input type="text" name="city" value="{{ profile.city }}" placeholder="تهران" maxlength="100">
+        </label>
+        <label class="field">
+          <span>لینک‌ها</span>
+          <textarea name="links" rows="2" class="ltr" dir="ltr" placeholder="linkedin.com/in/... &#10;github.com/..." maxlength="1000">{{ profile.links }}</textarea>
+          <small class="hint">هر لینک در یک خط؛ لینکدین، گیت‌هاب یا نمونه‌کار.</small>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">روایت حرفه‌ای</span>
+          <h3>خلاصه، مهارت‌ها و زبان‌ها</h3>
+        </div>
+        <span class="soft-icon is-gold"><svg class="icon"><use href="#i-sparkles"></use></svg></span>
+      </div>
+      <div class="form-grid">
+        <label class="field span-2">
+          <span>خلاصه حرفه‌ای</span>
+          <textarea name="summary" rows="5" placeholder="در ۳ تا ۵ خط، حوزه تخصص، تجربه کلیدی و ارزشی که ایجاد می‌کنید را بنویسید.">{{ profile.summary }}</textarea>
+          <small class="hint">برای هر آگهی، نسخه‌ای از این خلاصه بازنویسی می‌شود؛ از ادعاهای غیرقابل اثبات پرهیز کنید.</small>
+        </label>
+        <label class="field span-2">
+          <span>مهارت‌ها</span>
+          <input type="text" name="skills" value="{{ profile.skills }}" placeholder="حسابداری مالی، اکسل پیشرفته، سپیدار، گزارش‌های مالی" maxlength="2000">
+          <small class="hint">با ویرگول جدا کنید. در نسخه اختصاصی، مهارت‌های مرتبط با آگهی جلوتر می‌آیند.</small>
+        </label>
+        <label class="field span-2">
+          <span>زبان‌ها</span>
+          <input type="text" name="languages" value="{{ profile.languages }}" placeholder="فارسی (زبان مادری)، انگلیسی (متوسط)" maxlength="500">
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">مسیر کاری</span>
+          <h3>تجربه کاری</h3>
+          <p class="card-sub">برای هر نقش، دستاوردهای قابل اندازه‌گیری را جداگانه بنویسید.</p>
+        </div>
+        <span class="soft-icon is-green"><svg class="icon"><use href="#i-briefcase"></use></svg></span>
+      </div>
+      <div class="repeater" data-repeater="experience">
+        <div class="repeater-list" data-list></div>
+        <div class="repeater-empty" data-empty>
+          <svg class="icon"><use href="#i-briefcase"></use></svg>
+          <p>هنوز تجربه‌ای ثبت نشده است.</p>
+        </div>
+        <button class="btn btn--outline btn--sm" type="button" data-add>
+          <svg class="icon"><use href="#i-plus"></use></svg>
+          افزودن تجربه
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">پشتوانه علمی</span>
+          <h3>تحصیلات</h3>
+        </div>
+        <span class="soft-icon"><svg class="icon"><use href="#i-doc"></use></svg></span>
+      </div>
+      <div class="repeater" data-repeater="education">
+        <div class="repeater-list" data-list></div>
+        <div class="repeater-empty" data-empty>
+          <svg class="icon"><use href="#i-doc"></use></svg>
+          <p>هنوز تحصیلاتی ثبت نشده است.</p>
+        </div>
+        <button class="btn btn--outline btn--sm" type="button" data-add>
+          <svg class="icon"><use href="#i-plus"></use></svg>
+          افزودن تحصیلات
+        </button>
+      </div>
+    </section>
+
+    <section class="card" id="preferences">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">فیلتر هوشمند</span>
+          <h3>ترجیحات شغلی</h3>
+          <p class="card-sub">در امتیازدهی آگهی‌ها، فیلتر فهرست و ساخت لینک جستجوی سایت‌های کاریابی استفاده می‌شود.</p>
+        </div>
+        <span class="soft-icon is-gold"><svg class="icon"><use href="#i-target"></use></svg></span>
+      </div>
+      <div class="form-grid">
+        <label class="field span-2">
+          <span>عنوان‌های شغلی موردنظر</span>
+          <input type="text" name="pref_titles" value="{{ profile.preferences.get('titles', '') }}" placeholder="کارشناس حسابداری، تحلیلگر مالی، حسابرس داخلی" maxlength="500">
+        </label>
+        <label class="field">
+          <span>شهرها یا موقعیت‌های موردنظر</span>
+          <input type="text" name="pref_locations" value="{{ profile.preferences.get('locations', '') }}" placeholder="تهران، اصفهان، مشهد" maxlength="300">
+        </label>
+        <label class="field">
+          <span>کلیدواژه‌های مهم</span>
+          <input type="text" name="pref_keywords" value="{{ profile.preferences.get('keywords', '') }}" placeholder="IFRS، مالیات، انبار" maxlength="300">
+        </label>
+        <div class="field span-2">
+          <span>شیوه انجام کار</span>
+          <div class="check-chips">
+            {% set modes = profile.preferences.get('work_modes', []) %}
+            {% for key, label in WORK_MODES.items() %}
+            <label class="check-chip"><input type="checkbox" name="work_modes" value="{{ key }}" {{ 'checked' if key in modes }}><span>{{ label }}</span></label>
+            {% endfor %}
+          </div>
+          <small class="hint">می‌توانید چند گزینه را انتخاب کنید. خالی گذاشتن یعنی این فیلتر در امتیازدهی اعمال نشود.</small>
+        </div>
+        <div class="field span-2">
+          <span>نوع قرارداد یا همکاری</span>
+          <div class="check-chips">
+            {% set types = profile.preferences.get('employment_types', []) %}
+            {% for key, label in EMPLOYMENT_TYPES.items() %}
+            <label class="check-chip"><input type="checkbox" name="employment_types" value="{{ key }}" {{ 'checked' if key in types }}><span>{{ label }}</span></label>
+            {% endfor %}
+          </div>
+          <small class="hint">مثل برون‌سپاری، فریلنس، پاره‌وقت یا تمام‌وقت؛ آگهی‌های ناسازگار امتیاز کمتری می‌گیرند.</small>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button class="btn btn--primary" type="submit">
+        <svg class="icon"><use href="#i-check"></use></svg>
+        ذخیره و بازمحاسبه امتیازها
+      </button>
+      <a class="btn btn--ghost" href="{{ url_for('jobs_page') }}">مشاهده آگهی‌ها</a>
+    </div>
+  </form>
+
+  <aside class="side-stack">
+    <section class="card" id="cv">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">میان‌بر</span>
+          <h3>خواندن رزومه</h3>
+        </div>
+        <span class="soft-icon is-green"><svg class="icon"><use href="#i-upload"></use></svg></span>
+      </div>
+      <p class="card-sub">فایل CV را بارگذاری کنید تا اطلاعات آن در فرم قرار بگیرد. فایل در آرشیو مدارک می‌ماند.</p>
+      <form method="post" action="{{ url_for('upload_cv') }}" enctype="multipart/form-data" data-busy>
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <label class="file-drop">
+          <svg class="icon"><use href="#i-upload"></use></svg>
+          <strong>انتخاب فایل رزومه</strong>
+          <small>PDF، DOCX یا TXT · حداکثر ۲۰ مگابایت</small>
+          <input type="file" name="cv_file" accept=".pdf,.docx,.txt" required data-file-input>
+        </label>
+        <span class="file-name" data-file-name></span>
+        <button class="btn btn--gold btn--block" type="submit">
+          <svg class="icon"><use href="#i-ai"></use></svg>
+          خواندن و تکمیل خودکار
+        </button>
+      </form>
+      <div class="mini-note">
+        <svg class="icon"><use href="#i-shield"></use></svg>
+        <span>فایل روی همین دستگاه پردازش می‌شود{% if ai_ready %} و برای استخراج دقیق‌تر، متن آن به سرویس هوش مصنوعی انتخابی شما ارسال می‌شود{% endif %}.</span>
+      </div>
+    </section>
+
+    <section class="card" id="documents">
+      <div class="card-head">
+        <div>
+          <span class="card-kicker">پیوست‌ها</span>
+          <h3>آرشیو مدارک</h3>
+        </div>
+        <span class="soft-icon is-gold"><svg class="icon"><use href="#i-folder"></use></svg></span>
+      </div>
+      <form class="doc-upload" method="post" action="{{ url_for('upload_document') }}" enctype="multipart/form-data" data-busy>
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="form-grid">
+          <label class="field">
+            <span>عنوان</span>
+            <input type="text" name="doc_title" placeholder="مثلاً مدرک لیسانس" maxlength="150">
+          </label>
+          <label class="field">
+            <span>نوع مدرک</span>
+            <select name="doc_kind">
+              <option>مدرک تحصیلی</option>
+              <option>گواهی مهارت</option>
+              <option>معرفی‌نامه</option>
+              <option>نمونه کار</option>
+              <option>سایر</option>
+            </select>
+          </label>
+        </div>
+        <label class="file-drop file-drop--sm">
+          <svg class="icon"><use href="#i-plus"></use></svg>
+          <strong>افزودن فایل</strong>
+          <small>PDF، Word، تصویر یا TXT</small>
+          <input type="file" name="document_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" required data-file-input>
+        </label>
+        <span class="file-name" data-file-name></span>
+        <button class="btn btn--outline btn--block" type="submit">افزودن به آرشیو</button>
+      </form>
+
+      {% if documents %}
+      <div class="doc-list">
+        {% for doc in documents %}
+        <div class="doc-row">
+          <span class="doc-icon"><svg class="icon"><use href="#i-{{ 'doc' if doc.kind == 'رزومه' else 'file' }}"></use></svg></span>
+          <div class="doc-main">
+            <strong>{{ doc.title }}</strong>
+            <small>{{ doc.kind }} · {{ doc.size | filesize }} · {{ doc.created_at | jdate }}</small>
+          </div>
+          <div class="doc-actions">
+            <a class="icon-btn" href="{{ url_for('download_document', document_id=doc.id) }}" title="دانلود" aria-label="دانلود">
+              <svg class="icon"><use href="#i-download"></use></svg>
+            </a>
+            <form method="post" action="{{ url_for('delete_document', document_id=doc.id) }}" data-confirm="این مدرک از آرشیو حذف شود؟">
+              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+              <button class="icon-btn icon-btn--danger" type="submit" title="حذف" aria-label="حذف">
+                <svg class="icon"><use href="#i-trash"></use></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty empty--compact empty--plain">
+        <p>هنوز مدرکی بارگذاری نشده است.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <div class="side-note">
+      <svg class="icon"><use href="#i-info"></use></svg>
+      <p>هیچ اطلاعاتی به سایت کاریابی ارسال نمی‌شود؛ ارسال ایمیل فقط پس از تأیید نهایی شما انجام می‌گیرد.</p>
+    </div>
+  </aside>
+</div>
+
+<script type="application/json" id="experiences-data">{{ profile.experiences | tojson }}</script>
+<script type="application/json" id="education-data">{{ profile.education | tojson }}</script>
+
+<template id="experience-template">
+  <div class="repeater-item">
+    <div class="repeater-head">
+      <span class="repeater-title" data-title>تجربه کاری</span>
+      <button class="icon-btn icon-btn--danger" type="button" data-remove aria-label="حذف تجربه">
+        <svg class="icon"><use href="#i-trash"></use></svg>
+      </button>
+    </div>
+    <div class="form-grid">
+      <label class="field"><span>عنوان شغلی</span><input type="text" data-k="title" placeholder="کارشناس حسابداری" maxlength="200"></label>
+      <label class="field"><span>شرکت / سازمان</span><input type="text" data-k="company" placeholder="نام شرکت" maxlength="200"></label>
+      <label class="field"><span>موقعیت</span><input type="text" data-k="location" placeholder="تهران" maxlength="120"></label>
+      <div class="date-fields">
+        <label class="field"><span>شروع</span><input type="text" data-k="start" placeholder="۱۴۰۰" maxlength="40"></label>
+        <label class="field"><span>پایان</span><input type="text" data-k="end" placeholder="اکنون" maxlength="40"></label>
+      </div>
+      <label class="field span-2">
+        <span>وظایف و دستاوردها</span>
+        <textarea data-k="bullets" rows="4" placeholder="هر دستاورد یا وظیفه را در یک خط بنویسید؛ مثلاً:&#10;کاهش زمان بستن حساب‌ها از ۱۰ به ۵ روز&#10;تهیه گزارش‌های ماهانه مدیریتی"></textarea>
+        <small class="hint">هر خط، یک بولت در رزومه می‌شود.</small>
+      </label>
+    </div>
+  </div>
+</template>
+
+<template id="education-template">
+  <div class="repeater-item">
+    <div class="repeater-head">
+      <span class="repeater-title" data-title>تحصیلات</span>
+      <button class="icon-btn icon-btn--danger" type="button" data-remove aria-label="حذف تحصیلات">
+        <svg class="icon"><use href="#i-trash"></use></svg>
+      </button>
+    </div>
+    <div class="form-grid">
+      <label class="field"><span>مدرک</span><input type="text" data-k="degree" placeholder="کارشناسی" maxlength="150"></label>
+      <label class="field"><span>رشته</span><input type="text" data-k="field" placeholder="حسابداری" maxlength="150"></label>
+      <label class="field span-2"><span>دانشگاه / مؤسسه</span><input type="text" data-k="school" placeholder="دانشگاه تهران" maxlength="220"></label>
+      <div class="date-fields span-2">
+        <label class="field"><span>شروع</span><input type="text" data-k="start" placeholder="۱۳۹۶" maxlength="40"></label>
+        <label class="field"><span>پایان</span><input type="text" data-k="end" placeholder="۱۴۰۰" maxlength="40"></label>
+      </div>
+    </div>
+  </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.RESUMEYAR_REPEATERS = {
+    experience: {
+      data: JSON.parse(document.getElementById('experiences-data').textContent || '[]'),
+      template: 'experience-template',
+      target: 'experiences-json',
+      title: 'تجربه کاری'
+    },
+    education: {
+      data: JSON.parse(document.getElementById('education-data').textContent || '[]'),
+      template: 'education-template',
+      target: 'education-json',
+      title: 'تحصیلات'
+    }
+  };
+</script>
+{% endblock %}
