@@ -1274,6 +1274,48 @@ button { cursor: pointer; }
 }
 .preview-frame { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #e9e6df; }
 .preview-frame iframe { display: block; width: 100%; height: 620px; border: none; background: #fff; }
+
+.pdf-showcase {
+  border: 1px solid var(--gold);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fbf5e8, #ffffff 70%);
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.pdf-showcase-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.pdf-showcase-head h2 { margin: 2px 0 4px; font-size: 18px; color: var(--navy); }
+.pdf-showcase-head p { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.9; }
+.pdf-showcase-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pdf-showcase-frame { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; }
+.pdf-showcase-frame iframe { display: block; width: 100%; height: 70vh; min-height: 420px; border: none; background: #fff; }
+@media (max-width: 720px) {
+  .pdf-showcase-frame iframe { height: 58vh; min-height: 320px; }
+}
+
+.preview-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease;
+}
+.preview-toggle input { margin-top: 3px; width: 15px; height: 15px; accent-color: var(--gold); }
+.preview-toggle span { display: flex; flex-direction: column; gap: 2px; }
+.preview-toggle strong { font-size: 11.5px; color: var(--ink); }
+.preview-toggle small { font-size: 10px; color: var(--muted); line-height: 1.8; }
+.preview-toggle:hover { border-color: var(--gold); }
+.preview-toggle:has(input:checked) { border-color: var(--gold); background: var(--gold-soft); }
 .preview-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 11px; font-size: 10px; color: var(--muted); }
 .preview-foot span { display: flex; align-items: center; gap: 5px; }
 .preview-foot .icon { width: 14px; height: 14px; }

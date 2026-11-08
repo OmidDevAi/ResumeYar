@@ -334,6 +334,7 @@ def _application_view(application_id, compose=None, error=None):
         documents=db.list_documents(),
         compose=compose,
         compose_error=error,
+        show_preview=request.args.get("show") == "cv",
     )
 
 
@@ -669,6 +670,8 @@ def generate_application(job_id):
         flash(warning, "warning")
     label = "با هوش مصنوعی" if tailored.get("mode") == "ai" else "با موتور محلی"
     flash(f"نسخه اختصاصی {label} ساخته شد. متن‌ها را بازبینی کنید و سپس ارسال کنید.", "success")
+    if request.form.get("show_file") == "1":
+        return redirect(url_for("application_detail", application_id=application_id, show="cv"))
     return redirect(url_for("application_detail", application_id=application_id))
 
 
@@ -923,7 +926,7 @@ def delete_application_route(application_id):
 
 # ---------- settings ----------
 
-def _save_ai_form(form):
+def _ai_form_values(form):
     values = {
         "ai_enabled": "1" if form.get("ai_enabled") else "0",
         "ai_base_url": form.get("ai_base_url", "").strip(),
@@ -933,11 +936,15 @@ def _save_ai_form(form):
         values["ai_api_key"] = ""
     elif form.get("ai_api_key", "").strip():
         values["ai_api_key"] = form.get("ai_api_key", "").strip()
-    db.save_settings(values)
+    return values
+
+
+def _save_ai_form(form):
+    db.save_settings(_ai_form_values(form))
     return db.get_settings()
 
 
-def _save_smtp_form(form):
+def _smtp_form_values(form):
     values = {
         "smtp_host": form.get("smtp_host", "").strip(),
         "smtp_port": form.get("smtp_port", "").strip() or "587",
@@ -950,8 +957,18 @@ def _save_smtp_form(form):
         values["smtp_password"] = ""
     elif form.get("smtp_password"):
         values["smtp_password"] = form.get("smtp_password")
-    db.save_settings(values)
+    return values
+
+
+def _save_smtp_form(form):
+    db.save_settings(_smtp_form_values(form))
     return db.get_settings()
+
+
+def _draft_settings(values):
+    merged = dict(db.get_settings())
+    merged.update(values)
+    return merged
 
 
 @app.get("/settings")
@@ -976,16 +993,26 @@ def save_settings_route():
 
 @app.post("/settings/test-ai")
 def test_ai_connection():
-    settings = _save_ai_form(request.form)
-    ok, message = ai.test_connection(settings)
+    values = _ai_form_values(request.form)
+    ok, message = ai.test_connection(_draft_settings(values))
+    if ok:
+        db.save_settings(values)
+        message = f"{message} تنظیمات ذخیره شد."
+    else:
+        message = f"{message} تنظیمات ذخیره نشد."
     flash(message, "success" if ok else "error")
     return redirect(url_for("settings_page") + "#ai")
 
 
 @app.post("/settings/test-smtp")
 def test_smtp_connection():
-    settings = _save_smtp_form(request.form)
-    ok, message = emailer.test_connection(settings)
+    values = _smtp_form_values(request.form)
+    ok, message = emailer.test_connection(_draft_settings(values))
+    if ok:
+        db.save_settings(values)
+        message = f"{message} تنظیمات ذخیره شد."
+    else:
+        message = f"{message} تنظیمات ذخیره نشد."
     flash(message, "success" if ok else "error")
     return redirect(url_for("settings_page") + "#smtp")
 

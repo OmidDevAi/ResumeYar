@@ -49,6 +49,32 @@
 </div>
 {% endif %}
 
+{% if show_preview %}
+<section class="pdf-showcase" id="pdf-showcase">
+  <div class="pdf-showcase-head">
+    <div>
+      <span class="card-kicker">فایل ساخته شد</span>
+      <h2>پیش‌نمایش رزومه</h2>
+      <p>فایل در همین پنجره نمایش داده می‌شود. می‌توانید دانلود کنید یا مستقیم به بخش ارسال بروید.</p>
+    </div>
+    <div class="pdf-showcase-actions">
+      <a class="btn btn--gold btn--sm" href="{{ url_for('application_cv', application_id=application.id, download=1) }}">
+        <svg class="icon"><use href="#i-download"></use></svg>
+        دانلود رزومه
+      </a>
+      <a class="btn btn--outline btn--sm" href="#send-card" data-close-showcase>
+        <svg class="icon"><use href="#i-send"></use></svg>
+        رفتن به ارسال
+      </a>
+      <button class="btn btn--ghost btn--sm" type="button" data-close-showcase>بستن</button>
+    </div>
+  </div>
+  <div class="pdf-showcase-frame">
+    <iframe title="پیش‌نمایش رزومه" src="{{ url_for('application_cv', application_id=application.id) }}#view=FitH&navpanes=0"></iframe>
+  </div>
+</section>
+{% endif %}
+
 <div class="app-layout">
   <div class="stack">
     <section class="card card--preview">
@@ -199,7 +225,7 @@
       </details>
     </section>
     {% else %}
-    <section class="card card--send">
+    <section class="card card--send" id="send-card">
       <div class="card-head">
         <div>
           <span class="card-kicker">تأیید نهایی</span>

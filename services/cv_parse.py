@@ -11,6 +11,9 @@ class CVParserError(Exception):
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 PHONE_RE = re.compile(r"(?:\+?98|0)?[\s\-().]?9\d{2}[\s\-().]?\d{3}[\s\-().]?\d{4}")
 URL_RE = re.compile(r"https?://[^\s<>\"')]+|(?:www\.)[^\s<>\"')]+", re.I)
+PAGE_MARKER_RE = re.compile(
+    r"^(?:page|صفحه)\s*[0-9\u06f0-\u06f9]+(?:\s*(?:of|از)\s*[0-9\u06f0-\u06f9]+)?$", re.I
+)
 
 
 def _docx_text_stdlib(path):
@@ -98,6 +101,8 @@ def heuristic_profile(text):
     headline = ""
     skip_words = ("رزومه", "resume", "curriculum", "vitae", "cv", "سوابق", "اطلاعات")
     for index, line in enumerate(lines[:12]):
+        if PAGE_MARKER_RE.match(line) or line.isdigit():
+            continue
         if len(line) > 70 or EMAIL_RE.search(line) or PHONE_RE.search(line) or URL_RE.search(line):
             continue
         lowered = line.lower()
