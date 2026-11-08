@@ -1,7 +1,6 @@
 from datetime import datetime
 import os
 from pathlib import Path
-import re
 
 import arabic_reshaper
 from bidi.algorithm import get_display
@@ -35,7 +34,6 @@ MARGIN_X = 17 * mm
 CONTENT_W = PAGE_W - 2 * MARGIN_X
 COVER_MARGIN_X = 20 * mm
 COVER_W = PAGE_W - 2 * COVER_MARGIN_X
-PERSIAN_RE = re.compile(r"[\u0600-\u06FF]")
 
 
 def _register_fonts():
@@ -105,6 +103,20 @@ def _shape_line(text):
     return get_display(arabic_reshaper.reshape(str(text)), base_dir="R")
 
 
+def _bidi_line(text):
+    """Bidi for LTR paragraphs that may embed Persian words."""
+    return get_display(arabic_reshaper.reshape(str(text)), base_dir="L")
+
+
+def _direction(text):
+    """Return 'R' when most letters are Persian, otherwise 'L'."""
+    letters = [char for char in str(text or "") if char.isalpha()]
+    if not letters:
+        return "L"
+    persian = sum(1 for char in letters if "\u0600" <= char <= "\u06ff")
+    return "R" if persian * 2 > len(letters) else "L"
+
+
 def _rtl_lines(text, font_name, font_size, max_width):
     """Greedy-wrap logical RTL text, so each physical line keeps its order after bidi."""
     lines = []
@@ -136,18 +148,40 @@ def _text_markup(value, style, language, width):
     if language == "fa":
         lines = _rtl_lines(text, style.fontName, style.fontSize, width)
         return "<br/>".join(_escape(_shape_line(line)) for line in lines)
-    return _escape(text).replace("\n", "<br/>")
+    lines = [_bidi_line(line) for line in text.split("\n")]
+    return "<br/>".join(_escape(line) for line in lines)
 
 
 def _para(text, style, language, width=CONTENT_W):
     value = str(text or "").strip()
     if not value:
         return Paragraph("", style)
-    if language != "fa" and PERSIAN_RE.search(value):
-        if style.alignment != TA_RIGHT:
-            style = ParagraphStyle(style.name + "-rtl", parent=style, alignment=TA_RIGHT)
+    if language == "fa" and style.alignment != TA_RIGHT:
+        style = ParagraphStyle(style.name + "-rtl", parent=style, alignment=TA_RIGHT)
+    elif language != "fa" and _direction(value) == "R":
+        style = ParagraphStyle(style.name + "-rtl", parent=style, alignment=TA_RIGHT)
         language = "fa"
     return Paragraph(_text_markup(value, style, language, width), style)
+
+
+def _contact_markup(profile, language):
+    """Shape each contact item on its own, so phone/URL runs never get reordered."""
+    items = [
+        profile.get("phone", "").strip(),
+        profile.get("email", "").strip(),
+        profile.get("city", "").strip(),
+        " ".join(profile.get("links", "").replace("\n", " ").split()),
+    ]
+    rendered = []
+    for item in items:
+        if not item:
+            continue
+        if _direction(item) == "R":
+            item = _shape_line(item)
+        rendered.append(_escape(item))
+    if language == "fa":
+        rendered.reverse()
+    return "   ·   ".join(rendered)
 
 
 def _header(story, profile, job, styles, language, width=CONTENT_W):
@@ -158,16 +192,10 @@ def _header(story, profile, job, styles, language, width=CONTENT_W):
     headline = (job or {}).get("headline") or profile.get("headline", "")
     if headline:
         story.append(_para(headline, styles["headline"], language, width))
-    contacts = [
-        profile.get("phone", "").strip(),
-        profile.get("email", "").strip(),
-        profile.get("city", "").strip(),
-        " ".join(profile.get("links", "").replace("\n", " ").split()),
-    ]
-    contact_line = "   ·   ".join(c for c in contacts if c)
+    contact_line = _contact_markup(profile, language)
     if contact_line:
         story.append(Spacer(1, 2))
-        story.append(_para(contact_line, styles["contact"], language, width))
+        story.append(Paragraph(contact_line, styles["contact"]))
     story.append(Spacer(1, 5))
     story.append(HRFlowable(width="100%", thickness=1.5, color=GOLD,
                             spaceBefore=0, spaceAfter=1.5))
@@ -205,9 +233,16 @@ def _two_col(left_text, right_text, left_style, right_style, language):
 def _bullet_row(text, styles, language):
     marker_width = 5 * mm
     text_width = CONTENT_W - marker_width
-    marker = Paragraph("•", styles["bullet_marker"])
-    body = _para(text, styles["bullet"], language, text_width)
-    if language == "fa":
+    row_language = "fa" if _direction(text) == "R" else "en"
+    marker_style = styles["bullet_marker"]
+    if (row_language == "fa") != (language == "fa"):
+        marker_style = ParagraphStyle(
+            "bullet_marker-row", parent=marker_style,
+            alignment=TA_RIGHT if row_language == "fa" else TA_LEFT,
+        )
+    marker = Paragraph("•", marker_style)
+    body = _para(text, styles["bullet"], row_language, text_width)
+    if row_language == "fa":
         cells, widths = [[body, marker]], [text_width, marker_width]
     else:
         cells, widths = [[marker, body]], [marker_width, text_width]
@@ -244,10 +279,11 @@ def _render_education(story, profile, styles, language):
         if not title:
             continue
         dates = _date_range(item.get("start"), item.get("end"))
-        if language == "fa":
-            row = _two_col(dates, title, styles["date"], styles["subhead"], language)
+        row_language = "fa" if _direction(title) == "R" else "en"
+        if row_language == "fa":
+            row = _two_col(dates, title, styles["date"], styles["subhead"], row_language)
         else:
-            row = _two_col(title, dates, styles["subhead"], styles["date"], language)
+            row = _two_col(title, dates, styles["subhead"], styles["date"], row_language)
         story.append(row)
         if school and school != title:
             story.append(Spacer(1, 1))
@@ -269,14 +305,15 @@ def _render_experiences(story, profile, styles, language):
         if not (title or company):
             continue
         dates = _date_range(item.get("start"), item.get("end"))
+        row_language = "fa" if _direction(title) == "R" else "en"
         title = " | ".join(x for x in (title, company) if x)
         if dates:
-            if language == "fa":
-                story.append(_two_col(dates, title, styles["date"], styles["subhead"], language))
+            if row_language == "fa":
+                story.append(_two_col(dates, title, styles["date"], styles["subhead"], row_language))
             else:
-                story.append(_two_col(title, dates, styles["subhead"], styles["date"], language))
+                story.append(_two_col(title, dates, styles["subhead"], styles["date"], row_language))
         else:
-            story.append(_para(title, styles["subhead"], language))
+            story.append(_para(title, styles["subhead"], row_language))
         if location:
             story.append(_para(location, styles["meta"], language))
         bullets = [_clean_bullet(b) for b in (item.get("bullets") or []) if _clean_bullet(b)]
