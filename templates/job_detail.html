@@ -216,6 +216,13 @@
           <span>برای متن‌های هوشمندتر، <a href="{{ url_for('settings_page') }}#ai">هوش مصنوعی را فعال کنید</a>. فعلاً موتور محلی آماده است.</span>
         </div>
         {% endif %}
+        <label class="preview-toggle">
+          <input type="checkbox" name="show_file" value="1">
+          <span>
+            <strong>نمایش فایل بعد از ساخت</strong>
+            <small>رزومه ساخته‌شده بلافاصله در همین پنجره باز می‌شود؛ دانلود و ارسال هم در همان صفحه هست.</small>
+          </span>
+        </label>
         <button class="btn btn--gold btn--block" type="submit">
           <svg class="icon"><use href="#i-sparkles"></use></svg>
           ساخت رزومه و کاور لتر

@@ -16,3 +16,9 @@ venv/
 .idea/
 Thumbs.db
 .DS_Store
+
+# desktop build output
+desktop/build/
+desktop/dist/
+desktop/installer/
+*.exe

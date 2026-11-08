@@ -10,6 +10,8 @@ A local-first job-search assistant with a Persian-first interface. It keeps your
 
 رزومه‌یار: دستیار جست‌وجوی کار با رابط فارسی که همه‌چیز را روی سیستم خودتان نگه می‌دارد.
 
+![Dashboard of ResumeYar](docs/screenshot.png)
+
 ## Status
 
 | Area | State |
@@ -20,8 +22,9 @@ A local-first job-search assistant with a Persian-first interface. It keeps your
 | Application tracker with statuses and notes | Working |
 | Optional email sending through SMTP | Working, needs your own account |
 | AI rewriting through an OpenAI-compatible API | Working, off by default, needs your own key |
+| Windows desktop app (PyInstaller) | Working |
+| Windows installer (Inno Setup) | Working, built but not yet run on a clean machine |
 | Automated tests | Not started |
-| Installer or packaged executable | Not started |
 | Tested on browsers other than Chrome | Not started |
 
 ## Features
@@ -51,6 +54,24 @@ python app.py
 
 The app runs on http://127.0.0.1:5533 and opens the browser automatically. Set `PORT`, `HOST`, or `RESUMEYAR_NO_BROWSER=1` to change that behaviour.
 
+## Desktop window
+
+`desktop/` wraps the same Flask app in a native window with pywebview and WebView2, so no browser tab is needed. The window starts the local server, stays on 127.0.0.1, opens the Windows save dialog for PDF downloads, and refuses a second instance instead of showing a blank window.
+
+```bash
+pip install -r desktop/requirements_desktop.txt
+python desktop/launcher.py
+```
+
+To build the executable and the installer on Windows (PyInstaller and Inno Setup 6):
+
+```bat
+cd desktop
+build_windows.bat
+```
+
+`build_windows.bat` uses the virtual environment in the repository root and writes `desktop\dist\Resumeyar\Resumeyar.exe` plus an installer when ISCC is available. See [desktop/README.md](desktop/README.md) for build details and troubleshooting.
+
 ## Data and privacy
 
 - Everything lives in `data/`: `resumeyar.db`, uploaded files, generated PDFs, and `secret.key` for the session signer.
@@ -68,7 +89,7 @@ The app runs on http://127.0.0.1:5533 and opens the browser automatically. Set `
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md). The next step is a pytest suite for the services (parsing, matching, PDF) plus CI, then packaging for Windows.
+See [ROADMAP.md](ROADMAP.md). The next step is a pytest suite for the services (parsing, matching, PDF) plus CI; the Windows desktop build and installer are in `desktop/`.
 
 ## License
 

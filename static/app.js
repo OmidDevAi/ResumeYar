@@ -342,4 +342,14 @@
       finish('کپی نشد');
     }
   });
+  /* ---------- pdf showcase ---------- */
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-close-showcase]');
+    if (!button) return;
+    const section = document.getElementById('pdf-showcase');
+    if (section) section.remove();
+    const url = new URL(window.location.href);
+    url.searchParams.delete('show');
+    window.history.replaceState(null, '', url);
+  });
 })();
