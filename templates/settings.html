@@ -1,205 +1,205 @@
 {% extends "base.html" %}
-{% block title %}تنظیمات · رزومه‌یار{% endblock %}
-{% block eyebrow %}پیکربندی امن{% endblock %}
-{% block page_title %}تنظیمات{% endblock %}
+{% block title %}{{ t('تنظیمات') }} · {{ t('رزومه‌یار') }}{% endblock %}
+{% block eyebrow %}{{ t('پیکربندی امن') }}{% endblock %}
+{% block page_title %}{{ t('تنظیمات') }}{% endblock %}
 {% block top_actions %}
   <a class="btn btn--outline" href="{{ url_for('backup_data') }}">
     <svg class="icon"><use href="#i-download"></use></svg>
-    پشتیبان‌گیری از داده‌ها
+    {{ t('پشتیبان‌گیری از داده‌ها') }}
   </a>
 {% endblock %}
 
 {% block content %}
 <div class="notice notice--info">
   <svg class="icon"><use href="#i-shield"></use></svg>
-  <p>این برنامه فقط روی همین دستگاه اجرا می‌شود. کلید API و رمز ایمیل در فایل محلی ذخیره می‌شوند؛ آن‌ها را با دیگران به اشتراک نگذارید و از داده‌ها نسخه پشتیبان بگیرید.</p>
+  <p>{{ t('این برنامه فقط روی همین دستگاه اجرا می‌شود. کلید API و رمز ایمیل در فایل محلی ذخیره می‌شوند؛ آن‌ها را با دیگران به اشتراک نگذارید و از داده‌ها نسخه پشتیبان بگیرید.') }}</p>
 </div>
 
 <div class="settings-grid">
   <section class="card" id="ai">
     <div class="card-head">
       <div>
-        <span class="card-kicker">نویسنده هوشمند</span>
-        <h3>هوش مصنوعی</h3>
-        <p class="card-sub">برای بازنویسی دقیق خلاصه، مهارت‌ها و کاور لتر اختصاصی.</p>
+        <span class="card-kicker">{{ t('نویسنده هوشمند') }}</span>
+        <h3>{{ t('هوش مصنوعی') }}</h3>
+        <p class="card-sub">{{ t('برای بازنویسی دقیق خلاصه، مهارت‌ها و کاور لتر اختصاصی.') }}</p>
       </div>
-      <span class="status-pill {{ 'is-on' if ai_ready }}">{{ 'فعال' if ai_ready else 'غیرفعال' }}</span>
+      <span class="status-pill {{ 'is-on' if ai_ready }}">{{ t('فعال') if ai_ready else t('غیرفعال') }}</span>
     </div>
     <form method="post" action="{{ url_for('save_settings_route') }}" data-busy>
       <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <input type="hidden" name="section" value="ai">
       <label class="switch-row">
         <span class="switch-copy">
-          <strong>استفاده از هوش مصنوعی</strong>
-          <small>در صورت غیرفعال بودن، موتور محلی متن‌ها را می‌سازد.</small>
+          <strong>{{ t('استفاده از هوش مصنوعی') }}</strong>
+          <small>{{ t('در صورت غیرفعال بودن، موتور محلی متن‌ها را می‌سازد.') }}</small>
         </span>
         <input type="checkbox" name="ai_enabled" value="1" {{ 'checked' if settings.ai_enabled == '1' }}>
         <span class="switch-ui"></span>
       </label>
       <div class="form-grid">
         <label class="field span-2">
-          <span>آدرس سرویس (Base URL)</span>
+          <span>{{ t('آدرس سرویس (Base URL)') }}</span>
           <input class="ltr" type="url" name="ai_base_url" value="{{ settings.ai_base_url }}" dir="ltr" placeholder="https://api.openai.com/v1">
         </label>
         <label class="field span-2">
-          <span>نام مدل</span>
+          <span>{{ t('نام مدل') }}</span>
           <input class="ltr" type="text" name="ai_model" value="{{ settings.ai_model }}" dir="ltr" placeholder="gpt-4o-mini">
         </label>
         <label class="field span-2">
-          <span>کلید API</span>
+          <span>{{ t('کلید API') }}</span>
           <input class="ltr" type="password" name="ai_api_key" dir="ltr"
-                 placeholder="{{ 'برای حفظ کلید فعلی خالی بگذارید' if settings.ai_api_key else 'sk-...' }}"
+                 placeholder="{{ t('برای حفظ کلید فعلی خالی بگذارید') if settings.ai_api_key else 'sk-...' }}"
                  autocomplete="new-password">
-          <small class="hint">برای سرویس‌های محلی مثل Ollama، کلید لازم نیست؛ آدرس را روی `http://localhost:11434/v1` بگذارید.</small>
+          <small class="hint">{{ t('برای سرویس‌های محلی مثل Ollama، کلید لازم نیست؛ آدرس را روی `http://localhost:11434/v1` بگذارید.') }}</small>
         </label>
         {% if settings.ai_api_key %}
         <label class="check-line span-2">
           <input type="checkbox" name="clear_ai_key" value="1">
-          <span>کلید ذخیره‌شده حذف شود</span>
+          <span>{{ t('کلید ذخیره‌شده حذف شود') }}</span>
         </label>
         {% endif %}
       </div>
       <div class="form-actions">
         <button class="btn btn--primary" type="submit">
           <svg class="icon"><use href="#i-check"></use></svg>
-          ذخیره تنظیمات
+          {{ t('ذخیره تنظیمات') }}
         </button>
         <button class="btn btn--outline" type="submit" formaction="{{ url_for('test_ai_connection') }}">
           <svg class="icon"><use href="#i-zap"></use></svg>
-          ذخیره و آزمایش اتصال
+          {{ t('ذخیره و آزمایش اتصال') }}
         </button>
       </div>
     </form>
     <details class="help-details">
-      <summary>کدام سرویس‌ها پشتیبانی می‌شوند؟</summary>
-      <p>هر سرویس سازگار با OpenAI API، از جمله OpenAI، OpenRouter، Groq، Together و Ollama محلی. مدل باید خروجی JSON را پشتیبانی کند. هنگام استفاده از سرویس ابری، متن پروفایل و آگهی برای ساخت نسخه به آن سرویس فرستاده می‌شود.</p>
+      <summary>{{ t('کدام سرویس‌ها پشتیبانی می‌شوند؟') }}</summary>
+      <p>{{ t('هر سرویس سازگار با OpenAI API، از جمله OpenAI، OpenRouter، Groq، Together و Ollama محلی. مدل باید خروجی JSON را پشتیبانی کند. هنگام استفاده از سرویس ابری، متن پروفایل و آگهی برای ساخت نسخه به آن سرویس فرستاده می‌شود.') }}</p>
     </details>
   </section>
 
   <section class="card" id="smtp">
     <div class="card-head">
       <div>
-        <span class="card-kicker">ارسال نهایی</span>
-        <h3>سرور ایمیل (SMTP)</h3>
-        <p class="card-sub">برای ارسال درخواست همراه با رزومه، کاور لتر و مدارک.</p>
+        <span class="card-kicker">{{ t('ارسال نهایی') }}</span>
+        <h3>{{ t('سرور ایمیل (SMTP)') }}</h3>
+        <p class="card-sub">{{ t('برای ارسال درخواست همراه با رزومه، کاور لتر و مدارک.') }}</p>
       </div>
-      <span class="status-pill {{ 'is-on' if smtp_ready }}">{{ 'آماده' if smtp_ready else 'تنظیم نشده' }}</span>
+      <span class="status-pill {{ 'is-on' if smtp_ready }}">{{ t('آماده') if smtp_ready else t('تنظیم نشده') }}</span>
     </div>
     <form method="post" action="{{ url_for('save_settings_route') }}" data-busy>
       <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <input type="hidden" name="section" value="smtp">
       <div class="form-grid">
         <label class="field">
-          <span>میزبان SMTP</span>
+          <span>{{ t('میزبان SMTP') }}</span>
           <input class="ltr" type="text" name="smtp_host" value="{{ settings.smtp_host }}" dir="ltr" placeholder="smtp.gmail.com">
         </label>
         <label class="field">
-          <span>پورت</span>
+          <span>{{ t('پورت') }}</span>
           <input class="ltr" type="number" name="smtp_port" value="{{ settings.smtp_port }}" dir="ltr" placeholder="587">
         </label>
         <label class="field">
-          <span>نوع امنیت</span>
+          <span>{{ t('نوع امنیت') }}</span>
           <select name="smtp_security">
-            <option value="starttls" {{ 'selected' if settings.smtp_security == 'starttls' }}>STARTTLS (پیشنهادی)</option>
+            <option value="starttls" {{ 'selected' if settings.smtp_security == 'starttls' }}>{{ t('STARTTLS (پیشنهادی)') }}</option>
             <option value="ssl" {{ 'selected' if settings.smtp_security == 'ssl' }}>SSL</option>
-            <option value="none" {{ 'selected' if settings.smtp_security == 'none' }}>بدون رمزنگاری</option>
+            <option value="none" {{ 'selected' if settings.smtp_security == 'none' }}>{{ t('بدون رمزنگاری') }}</option>
           </select>
         </label>
         <label class="field">
-          <span>نام کاربری</span>
+          <span>{{ t('نام کاربری') }}</span>
           <input class="ltr" type="text" name="smtp_user" value="{{ settings.smtp_user }}" dir="ltr" placeholder="you@gmail.com">
         </label>
         <label class="field">
-          <span>رمز عبور / App Password</span>
+          <span>{{ t('رمز عبور / App Password') }}</span>
           <input class="ltr" type="password" name="smtp_password" dir="ltr"
-                 placeholder="{{ 'برای حفظ رمز فعلی خالی بگذارید' if settings.smtp_password else 'رمز یا App Password' }}"
+                 placeholder="{{ t('برای حفظ رمز فعلی خالی بگذارید') if settings.smtp_password else t('رمز یا App Password') }}"
                  autocomplete="new-password">
         </label>
         <label class="field">
-          <span>نام فرستنده</span>
-          <input type="text" name="smtp_from_name" value="{{ settings.smtp_from_name }}" placeholder="نام و نام خانوادگی">
+          <span>{{ t('نام فرستنده') }}</span>
+          <input type="text" name="smtp_from_name" value="{{ settings.smtp_from_name }}" placeholder="{{ t('نام و نام خانوادگی') }}">
         </label>
         <label class="field span-2">
-          <span>ایمیل فرستنده</span>
+          <span>{{ t('ایمیل فرستنده') }}</span>
           <input class="ltr" type="email" name="smtp_from_email" value="{{ settings.smtp_from_email }}" dir="ltr" placeholder="you@gmail.com">
         </label>
         {% if settings.smtp_password %}
         <label class="check-line span-2">
           <input type="checkbox" name="clear_smtp_password" value="1">
-          <span>رمز ذخیره‌شده حذف شود</span>
+          <span>{{ t('رمز ذخیره‌شده حذف شود') }}</span>
         </label>
         {% endif %}
       </div>
       <div class="form-actions">
         <button class="btn btn--primary" type="submit">
           <svg class="icon"><use href="#i-check"></use></svg>
-          ذخیره تنظیمات
+          {{ t('ذخیره تنظیمات') }}
         </button>
         <button class="btn btn--outline" type="submit" formaction="{{ url_for('test_smtp_connection') }}">
           <svg class="icon"><use href="#i-zap"></use></svg>
-          ذخیره و آزمایش اتصال
+          {{ t('ذخیره و آزمایش اتصال') }}
         </button>
       </div>
     </form>
     <details class="help-details">
-      <summary>راهنمای سریع Gmail و سرویس‌های ایرانی</summary>
-      <p>برای Gmail، رمز معمولی کار نمی‌کند؛ در حساب گوگل «App Password» بسازید (نیازمند تأیید دومرحله‌ای). میزبان: smtp.gmail.com، پورت ۵۸۷ با STARTTLS. برای سرویس‌های ایرانی، میزبان و پورت را از پشتیبانی سرویس بگیرید. آزمایش اتصال فقط وارد شدن را بررسی می‌کند و ایمیلی نمی‌فرستد.</p>
+      <summary>{{ t('راهنمای سریع Gmail و سرویس‌های ایرانی') }}</summary>
+      <p>{{ t('برای Gmail، رمز معمولی کار نمی‌کند؛ در حساب گوگل «App Password» بسازید (نیازمند تأیید دومرحله‌ای). میزبان: smtp.gmail.com، پورت ۵۸۷ با STARTTLS. برای سرویس‌های ایرانی، میزبان و پورت را از پشتیبانی سرویس بگیرید. آزمایش اتصال فقط وارد شدن را بررسی می‌کند و ایمیلی نمی‌فرستد.') }}</p>
     </details>
   </section>
 
   <section class="card" id="data">
     <div class="card-head">
       <div>
-        <span class="card-kicker">مالکیت داده</span>
-        <h3>داده‌ها و پشتیبان</h3>
-        <p class="card-sub">همه چیز در پوشه محلی برنامه ذخیره می‌شود.</p>
+        <span class="card-kicker">{{ t('مالکیت داده') }}</span>
+        <h3>{{ t('داده‌ها و پشتیبان') }}</h3>
+        <p class="card-sub">{{ t('همه چیز در پوشه محلی برنامه ذخیره می‌شود.') }}</p>
       </div>
       <span class="soft-icon"><svg class="icon"><use href="#i-folder"></use></svg></span>
     </div>
     <div class="data-info">
       <div class="data-row">
-        <span>محل ذخیره‌سازی</span>
+        <span>{{ t('محل ذخیره‌سازی') }}</span>
         <code class="ltr" dir="ltr">{{ data_dir }}</code>
       </div>
       <div class="data-row">
-        <span>پایگاه داده</span>
-        <span>پروفایل، آگهی‌ها، درخواست‌ها، وضعیت ارسال</span>
+        <span>{{ t('پایگاه داده') }}</span>
+        <span>{{ t('پروفایل، آگهی‌ها، درخواست‌ها، وضعیت ارسال') }}</span>
       </div>
       <div class="data-row">
-        <span>فایل‌ها</span>
-        <span>رزومه‌های اصلی، مدارک، PDFهای ساخته‌شده</span>
+        <span>{{ t('فایل‌ها') }}</span>
+        <span>{{ t('رزومه‌های اصلی، مدارک، PDFهای ساخته‌شده') }}</span>
       </div>
     </div>
     <div class="mini-note">
       <svg class="icon"><use href="#i-alert"></use></svg>
-      <span>فایل پشتیبان شامل کلید API و رمز SMTP است؛ آن را در جای امن نگه دارید.</span>
+      <span>{{ t('فایل پشتیبان شامل کلید API و رمز SMTP است؛ آن را در جای امن نگه دارید.') }}</span>
     </div>
     <a class="btn btn--outline" href="{{ url_for('backup_data') }}">
       <svg class="icon"><use href="#i-download"></use></svg>
-      دانلود پشتیبان کامل (ZIP)
+      {{ t('دانلود پشتیبان کامل (ZIP)') }}
     </a>
   </section>
 
   <section class="card">
     <div class="card-head">
       <div>
-        <span class="card-kicker">قواعد کار</span>
-        <h3>ارسال مسئولانه</h3>
+        <span class="card-kicker">{{ t('قواعد کار') }}</span>
+        <h3>{{ t('ارسال مسئولانه') }}</h3>
       </div>
       <span class="soft-icon is-green"><svg class="icon"><use href="#i-shield"></use></svg></span>
     </div>
     <ul class="rule-list">
       <li>
         <svg class="icon"><use href="#i-check-circle"></use></svg>
-        <div><strong>هر ارسال با تأیید شما</strong><span>هیچ ایمیلی بدون کلیک نهایی شما ارسال نمی‌شود.</span></div>
+        <div><strong>{{ t('هر ارسال با تأیید شما') }}</strong><span>{{ t('هیچ ایمیلی بدون کلیک نهایی شما ارسال نمی‌شود.') }}</span></div>
       </li>
       <li>
         <svg class="icon"><use href="#i-check-circle"></use></svg>
-        <div><strong>بدون ادعای ساختگی</strong><span>متن‌ها فقط بر پایه اطلاعات واقعی پروفایل ساخته می‌شوند.</span></div>
+        <div><strong>{{ t('بدون ادعای ساختگی') }}</strong><span>{{ t('متن‌ها فقط بر پایه اطلاعات واقعی پروفایل ساخته می‌شوند.') }}</span></div>
       </li>
       <li>
         <svg class="icon"><use href="#i-check-circle"></use></svg>
-        <div><strong>ارسال انبوه نداریم</strong><span>هر درخواست برای یک آگهی مشخص و با بازبینی انسانی است.</span></div>
+        <div><strong>{{ t('ارسال انبوه نداریم') }}</strong><span>{{ t('هر درخواست برای یک آگهی مشخص و با بازبینی انسانی است.') }}</span></div>
       </li>
     </ul>
   </section>

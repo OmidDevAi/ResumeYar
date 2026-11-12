@@ -19,6 +19,7 @@ from flask import (
 from werkzeug.exceptions import RequestEntityTooLarge
 
 import db
+from i18n import LANGUAGES, RTL_LANGUAGES, translate
 from services import ai, cv_parse, emailer, jobsource, pdfgen, tailoring
 from utils import (
     EMPLOYMENT_TYPES, WORK_MODES, analyze_match, build_search_links, detect_language,
@@ -75,13 +76,77 @@ def _csrf_token():
     return session["_csrf"]
 
 
+LATIN_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+SIZE_UNITS_EN = {"بایت": "B", "کیلوبایت": "KB", "مگابایت": "MB", "گیگابایت": "GB"}
+
+
+def _lang():
+    lang = session.get("lang", "fa")
+    return lang if lang in LANGUAGES else "fa"
+
+
+def t(text, **values):
+    out = translate(text, _lang())
+    return out.format(**values) if values else out
+
+
+def _digits(value):
+    text = fa_digits(value)
+    return text if _lang() == "fa" else text.translate(LATIN_DIGITS)
+
+
+MONTHS_EN = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def _gregorian(value, with_time=False):
+    if not value:
+        return "—"
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00")) if isinstance(value, str) else value
+        local = parsed.astimezone()
+        text = f"{local.day} {MONTHS_EN[local.month - 1]} {local.year}"
+        if with_time:
+            text += f", {local.hour:02d}:{local.minute:02d}"
+        return text
+    except (ValueError, TypeError, OverflowError):
+        return "—"
+
+
+def _jdate(value):
+    if _lang() == "fa":
+        return format_jalali(value)
+    return _gregorian(value)
+
+
+def _jdatetime(value):
+    if _lang() == "fa":
+        return format_jalali(value, with_time=True)
+    return _gregorian(value, with_time=True)
+
+
+def _filesize(value):
+    text = human_size(value)
+    if _lang() == "fa":
+        return text
+    for fa, en in SIZE_UNITS_EN.items():
+        text = text.replace(fa, en)
+    return text.translate(LATIN_DIGITS)
+
+
+def _labels(mapping):
+    lang = _lang()
+    return {key: translate(value, lang) for key, value in mapping.items()}
+
+
 app.jinja_env.globals["csrf_token"] = _csrf_token
 app.jinja_env.filters.update({
-    "jdate": lambda value: format_jalali(value),
-    "jdatetime": lambda value: format_jalali(value, with_time=True),
-    "fadigits": fa_digits,
-    "filesize": human_size,
+    "jdate": _jdate,
+    "jdatetime": _jdatetime,
+    "fadigits": _digits,
+    "filesize": _filesize,
     "shorten": truncate,
+    "tr": lambda value: translate(value, _lang()),
 })
 app.jinja_env.globals["JOB_STATUSES"] = JOB_STATUSES
 app.jinja_env.globals["APP_STATUSES"] = APP_STATUSES
@@ -99,19 +164,33 @@ def _load_globals():
 
 @app.before_request
 def _prepare():
+    g.lang = _lang()
     _load_globals()
     _csrf_token()
     if request.method == "POST":
         supplied = request.form.get("_csrf") or request.headers.get("X-CSRF-Token", "")
         expected = session.get("_csrf", "")
         if not supplied or not expected or not hmac.compare_digest(supplied, expected):
-            abort(400, description="نشست شما منقضی شده است. صفحه را دوباره باز کنید.")
+            abort(400, description=t("نشست شما منقضی شده است. صفحه را دوباره باز کنید."))
+
+
+@app.get("/lang/<code>")
+def set_language(code):
+    if code in LANGUAGES:
+        session["lang"] = code
+    target = request.args.get("next", "")
+    if not target.startswith("/") or target.startswith("//"):
+        target = request.referrer or url_for("dashboard")
+        if not target.startswith(request.host_url):
+            target = url_for("dashboard")
+    return redirect(target)
 
 
 @app.context_processor
 def _inject():
     profile, settings = _load_globals()
     completeness = profile_completeness(profile, g.counts["documents"])
+    lang = g.get("lang", "fa")
     return {
         "profile": profile,
         "settings": settings,
@@ -120,6 +199,16 @@ def _inject():
         "smtp_ready": emailer.smtp_ready(settings),
         "ai_ready": ai.ai_ready(settings),
         "current_endpoint": request.endpoint or "",
+        "lang": lang,
+        "rtl": lang in RTL_LANGUAGES,
+        "languages": LANGUAGES,
+        "other_lang": "en" if lang == "fa" else "fa",
+        "t": lambda text: translate(text, lang),
+        "sep": "، " if lang == "fa" else ", ",
+        "JOB_STATUSES": _labels(JOB_STATUSES),
+        "APP_STATUSES": _labels(APP_STATUSES),
+        "WORK_MODES": _labels(WORK_MODES),
+        "EMPLOYMENT_TYPES": _labels(EMPLOYMENT_TYPES),
     }
 
 
@@ -182,14 +271,14 @@ def _store_upload(file_storage, allowed_ext, max_mb=MAX_DOC_MB):
     original = file_storage.filename or ""
     ext = Path(original).suffix.lower()
     if ext not in allowed_ext:
-        raise ValueError("فرمت فایل مجاز نیست.")
+        raise ValueError(t("فرمت فایل مجاز نیست."))
     stored = f"{uuid.uuid4().hex}{ext}"
     target = db.UPLOADS_DIR / stored
     file_storage.save(target)
     size = target.stat().st_size
     if size > max_mb * 1024 * 1024:
         target.unlink(missing_ok=True)
-        raise ValueError(f"حجم فایل بیشتر از {max_mb} مگابایت است.")
+        raise ValueError(t("حجم فایل بیشتر از {max_mb} مگابایت است.", max_mb=max_mb))
     return stored, size
 
 
@@ -255,14 +344,14 @@ def _generate_for_job(job, profile, language, mode):
     warnings = []
     existing = db.get_application_by_job(job["id"])
     if existing and existing["status"] == "sent":
-        raise ValueError("این درخواست قبلاً ارسال شده و قابل بازتولید نیست.")
+        raise ValueError(t("این درخواست قبلاً ارسال شده و قابل بازتولید نیست."))
     use_ai = mode == "ai" or (mode == "auto" and ai.ai_ready(g.settings))
     tailored = None
     if use_ai:
         try:
             tailored = ai.tailor(profile, job, language, g.settings)
         except ai.AIError as exc:
-            warnings.append(f"هوش مصنوعی پاسخ نداد؛ نسخه محلی ساخته شد. ({exc})")
+            warnings.append(t("هوش مصنوعی پاسخ نداد؛ نسخه محلی ساخته شد. ({exc})", exc=exc))
     if tailored is None:
         tailored = tailoring.local_tailor(profile, job, language)
 
@@ -347,13 +436,13 @@ def dashboard():
     recent_jobs = db.recent_jobs(4)
     recent_apps = db.recent_applications(5)
     steps = [
-        {"label": "پروفایل را کامل کنید", "done": completeness["percent"] >= 70,
+        {"label": t("پروفایل را کامل کنید"), "done": completeness["percent"] >= 70,
          "url": url_for("profile_page")},
-        {"label": "رزومه و مدارک را بارگذاری کنید", "done": counts["documents"] > 0,
+        {"label": t("رزومه و مدارک را بارگذاری کنید"), "done": counts["documents"] > 0,
          "url": url_for("profile_page") + "#documents"},
-        {"label": "اولین آگهی را اضافه کنید", "done": counts["jobs"] > 0,
+        {"label": t("اولین آگهی را اضافه کنید"), "done": counts["jobs"] > 0,
          "url": url_for("jobs_page")},
-        {"label": "نسخه اختصاصی بسازید و ارسال کنید", "done": counts["sent"] > 0,
+        {"label": t("نسخه اختصاصی بسازید و ارسال کنید"), "done": counts["sent"] > 0,
          "url": url_for("applications_page")},
     ]
     return render_template(
@@ -394,7 +483,7 @@ def save_profile_route():
         "preferences": preferences,
     })
     _rescore_jobs()
-    flash("پروفایل ذخیره شد و امتیاز آگهی‌ها دوباره محاسبه شد.", "success")
+    flash(t("پروفایل ذخیره شد و امتیاز آگهی‌ها دوباره محاسبه شد."), "success")
     return redirect(url_for("profile_page"))
 
 
@@ -402,7 +491,7 @@ def save_profile_route():
 def upload_cv():
     file = request.files.get("cv_file")
     if not file or not file.filename:
-        flash("فایلی انتخاب نشده است.", "error")
+        flash(t("فایلی انتخاب نشده است."), "error")
         return redirect(url_for("profile_page") + "#cv")
     try:
         stored, size = _store_upload(file, ALLOWED_CV_EXT)
@@ -410,13 +499,13 @@ def upload_cv():
         flash(str(exc), "error")
         return redirect(url_for("profile_page") + "#cv")
     original = file.filename
-    title = request.form.get("cv_title", "").strip() or "رزومه اصلی"
+    title = request.form.get("cv_title", "").strip() or t("رزومه اصلی")
     db.add_document(title[:150], "رزومه", original[:250], stored, size)
     path = db.UPLOADS_DIR / stored
     try:
         text = cv_parse.extract_text(path)
     except cv_parse.CVParserError as exc:
-        flash(f"فایل ذخیره شد اما متن آن خوانده نشد: {exc}", "warning")
+        flash(t("فایل ذخیره شد اما متن آن خوانده نشد: {exc}", exc=exc), "warning")
         return redirect(url_for("profile_page") + "#documents")
 
     ai_profile = None
@@ -450,9 +539,9 @@ def upload_cv():
     db.save_profile(updates)
     _rescore_jobs()
     if ai_error:
-        flash(f"رزومه خوانده شد، اما استخراج هوشمند انجام نشد: {ai_error}", "warning")
-    mode = "با هوش مصنوعی" if used_ai else "به‌صورت خودکار"
-    flash(f"رزومه {mode} خوانده شد؛ اطلاعات را در فرم بازبینی و تکمیل کنید.", "success")
+        flash(t("رزومه خوانده شد، اما استخراج هوشمند انجام نشد: {ai_error}", ai_error=ai_error), "warning")
+    mode = t("با هوش مصنوعی") if used_ai else t("به‌صورت خودکار")
+    flash(t("رزومه {mode} خوانده شد؛ اطلاعات را در فرم بازبینی و تکمیل کنید.", mode=mode), "success")
     return redirect(url_for("profile_page"))
 
 
@@ -460,7 +549,7 @@ def upload_cv():
 def upload_document():
     file = request.files.get("document_file")
     if not file or not file.filename:
-        flash("فایلی انتخاب نشده است.", "error")
+        flash(t("فایلی انتخاب نشده است."), "error")
         return redirect(url_for("profile_page") + "#documents")
     try:
         stored, size = _store_upload(file, ALLOWED_DOC_EXT)
@@ -470,7 +559,7 @@ def upload_document():
     title = request.form.get("doc_title", "").strip() or file.filename
     kind = request.form.get("doc_kind", "").strip() or "سایر"
     db.add_document(title[:150], kind[:80], file.filename[:250], stored, size)
-    flash("مدرک به آرشیو اضافه شد.", "success")
+    flash(t("مدرک به آرشیو اضافه شد."), "success")
     return redirect(url_for("profile_page") + "#documents")
 
 
@@ -490,7 +579,7 @@ def delete_document(document_id):
     stored = db.delete_document(document_id)
     if stored:
         (db.UPLOADS_DIR / stored).unlink(missing_ok=True)
-        flash("مدرک حذف شد.", "success")
+        flash(t("مدرک حذف شد."), "success")
     return redirect(url_for("profile_page") + "#documents")
 
 
@@ -556,13 +645,13 @@ def import_job():
         contact_email = contact_email or fetched.get("contact_email", "")
         source = source or fetched.get("source", "")
     if not title or len(description) < 20:
-        flash("عنوان و متن آگهی لازم است. متن آگهی را کامل‌تر وارد کنید.", "error")
+        flash(t("عنوان و متن آگهی لازم است. متن آگهی را کامل‌تر وارد کنید."), "error")
         return redirect(url_for("jobs_page") + "#import")
 
     if url:
         existing = db.get_job_by_url(url)
         if existing:
-            flash("این آگهی قبلاً ذخیره شده است.", "info")
+            flash(t("این آگهی قبلاً ذخیره شده است."), "info")
             return redirect(url_for("job_detail", job_id=existing["id"]))
 
     language = language_choice if language_choice in ("fa", "en") else detect_language(title + " " + description)
@@ -578,7 +667,7 @@ def import_job():
     if warnings:
         for warning in warnings:
             flash(warning, "warning")
-    flash("آگهی ذخیره و امتیاز تطبیق محاسبه شد.", "success")
+    flash(t("آگهی ذخیره و امتیاز تطبیق محاسبه شد."), "success")
     return redirect(url_for("job_detail", job_id=job_id))
 
 
@@ -605,24 +694,26 @@ def discover_jobs():
         db.add_job(item)
         added += 1
     if added:
-        flash(f"{fa_digits(added)} آگهی جدید از {SOURCE_OPTIONS.get(source, {}).get('name', source)} اضافه شد.", "success")
+        flash(t("{added} آگهی جدید از {name} اضافه شد.", added=_digits(added), name=SOURCE_OPTIONS.get(source, {}).get("name", source)), "success")
     elif skipped:
-        flash("آگهی‌های یافت‌شده از قبل در آرشیو وجود داشتند.", "info")
+        flash(t("آگهی‌های یافت‌شده از قبل در آرشیو وجود داشتند."), "info")
     elif work_mode:
         flash(
-            f"آگهی با شیوه همکاری «{WORK_MODES[work_mode]}» در این منبع پیدا نشد؛ "
-            "همه منابع فعلی بیشتر ریموت هستند. فیلتر را بردارید یا از جستجوی سایت‌ها استفاده کنید.",
+            t(
+                "آگهی با شیوه همکاری «{mode}» در این منبع پیدا نشد؛ همه منابع فعلی بیشتر ریموت هستند. فیلتر را بردارید یا از جستجوی سایت‌ها استفاده کنید.",
+                mode=t(WORK_MODES.get(work_mode, work_mode)),
+            ),
             "info",
         )
     else:
-        flash("آگهی مرتبطی پیدا نشد؛ کلیدواژه انگلیسی یا منبع دیگری را امتحان کنید.", "info")
+        flash(t("آگهی مرتبطی پیدا نشد؛ کلیدواژه انگلیسی یا منبع دیگری را امتحان کنید."), "info")
     return redirect(url_for("jobs_page"))
 
 
 @app.post("/jobs/recalculate")
 def recalculate_jobs():
     _rescore_jobs()
-    flash("امتیاز همه آگهی‌ها بر اساس پروفایل فعلی بازمحاسبه شد.", "success")
+    flash(t("امتیاز همه آگهی‌ها بر اساس پروفایل فعلی بازمحاسبه شد."), "success")
     return redirect(url_for("jobs_page"))
 
 
@@ -651,7 +742,7 @@ def generate_application(job_id):
         abort(404)
     profile = db.get_profile()
     if not profile.get("full_name") or not (profile.get("skills") or profile.get("experiences")):
-        flash("برای ساخت رزومه اختصاصی، ابتدا نام و مهارت‌ها یا تجربه‌های خود را در پروفایل تکمیل کنید.", "error")
+        flash(t("برای ساخت رزومه اختصاصی، ابتدا نام و مهارت‌ها یا تجربه‌های خود را در پروفایل تکمیل کنید."), "error")
         return redirect(url_for("profile_page"))
     language = request.form.get("language", job.get("language", "fa"))
     language = language if language in ("fa", "en") else "fa"
@@ -664,12 +755,12 @@ def generate_application(job_id):
         return redirect(url_for("job_detail", job_id=job_id))
     except Exception as exc:
         app.logger.exception("PDF generation failed")
-        flash(f"ساخت فایل‌ها ناموفق بود: {exc}", "error")
+        flash(t("ساخت فایل‌ها ناموفق بود: {exc}", exc=exc), "error")
         return redirect(url_for("job_detail", job_id=job_id))
     for warning in warnings:
         flash(warning, "warning")
-    label = "با هوش مصنوعی" if tailored.get("mode") == "ai" else "با موتور محلی"
-    flash(f"نسخه اختصاصی {label} ساخته شد. متن‌ها را بازبینی کنید و سپس ارسال کنید.", "success")
+    label = t("با هوش مصنوعی") if tailored.get("mode") == "ai" else t("با موتور محلی")
+    flash(t("نسخه اختصاصی {label} ساخته شد. متن‌ها را بازبینی کنید و سپس ارسال کنید.", label=label), "success")
     if request.form.get("show_file") == "1":
         return redirect(url_for("application_detail", application_id=application_id, show="cv"))
     return redirect(url_for("application_detail", application_id=application_id))
@@ -683,7 +774,7 @@ def update_job_status(job_id):
     status = request.form.get("status", "")
     if status in JOB_STATUSES:
         db.update_job(job_id, {"status": status})
-        flash("وضعیت آگهی به‌روزرسانی شد.", "success")
+        flash(t("وضعیت آگهی به‌روزرسانی شد."), "success")
     return redirect(url_for("job_detail", job_id=job_id))
 
 
@@ -693,7 +784,7 @@ def update_job_notes(job_id):
     if not job:
         abort(404)
     db.update_job(job_id, {"notes": request.form.get("notes", "").strip()[:4000]})
-    flash("یادداشت ذخیره شد.", "success")
+    flash(t("یادداشت ذخیره شد."), "success")
     return redirect(url_for("job_detail", job_id=job_id))
 
 
@@ -706,7 +797,7 @@ def delete_job_route(job_id):
     folder = db.GENERATED_DIR / f"job-{job_id}"
     if folder.is_dir():
         shutil.rmtree(folder, ignore_errors=True)
-    flash("آگهی و درخواست مرتبط حذف شد.", "success")
+    flash(t("آگهی و درخواست مرتبط حذف شد."), "success")
     return redirect(url_for("jobs_page"))
 
 
@@ -733,7 +824,7 @@ def save_application(application_id):
     if not application:
         abort(404)
     if application["status"] == "sent":
-        flash("این درخواست ارسال شده و قابل ویرایش نیست.", "error")
+        flash(t("این درخواست ارسال شده و قابل ویرایش نیست."), "error")
         return redirect(url_for("application_detail", application_id=application_id))
     skills = split_list(request.form.get("skills", ""))[:40]
     headline = request.form.get("headline", "").strip()[:200]
@@ -749,14 +840,14 @@ def save_application(application_id):
         cv_rel, cover_rel = _build_application_pdfs(job, application_id, profile, tailored, language)
     except Exception as exc:
         app.logger.exception("PDF rebuild failed")
-        flash(f"ذخیره شد اما ساخت PDF ناموفق بود: {exc}", "error")
+        flash(t("ذخیره شد اما ساخت PDF ناموفق بود: {exc}", exc=exc), "error")
         return redirect(url_for("application_detail", application_id=application_id))
     db.update_application(application_id, {
         "headline": headline, "summary": summary, "skills": skills,
         "cover_letter": cover_letter, "tailored": tailored,
         "cv_path": cv_rel, "cover_path": cover_rel,
     })
-    flash("پیش‌نویس و فایل‌های PDF به‌روزرسانی شدند.", "success")
+    flash(t("پیش‌نویس و فایل‌های PDF به‌روزرسانی شدند."), "success")
     return redirect(url_for("application_detail", application_id=application_id))
 
 
@@ -766,7 +857,7 @@ def regenerate_application(application_id):
     if not application:
         abort(404)
     if application["status"] == "sent":
-        flash("این درخواست ارسال شده و قابل بازتولید نیست.", "error")
+        flash(t("این درخواست ارسال شده و قابل بازتولید نیست."), "error")
         return redirect(url_for("application_detail", application_id=application_id))
     job = _job_dict_from_app(application)
     profile = db.get_profile()
@@ -778,11 +869,11 @@ def regenerate_application(application_id):
         _, warnings, tailored = _generate_for_job(job, profile, language, mode)
     except Exception as exc:
         app.logger.exception("Regeneration failed")
-        flash(f"بازتولید ناموفق بود: {exc}", "error")
+        flash(t("بازتولید ناموفق بود: {exc}", exc=exc), "error")
         return redirect(url_for("application_detail", application_id=application_id))
     for warning in warnings:
         flash(warning, "warning")
-    flash("نسخه جدید ساخته شد؛ متن‌های قبلی جایگزین شدند.", "success")
+    flash(t("نسخه جدید ساخته شد؛ متن‌های قبلی جایگزین شدند."), "success")
     return redirect(url_for("application_detail", application_id=application_id))
 
 
@@ -807,28 +898,28 @@ def application_cover(application_id):
 def _job_details_text(application, profile):
     job = _job_dict_from_app(application)
     lines = [
-        "مشخصات آگهی",
+        t("مشخصات آگهی"),
         "=" * 30,
-        f"عنوان: {job['title']}",
-        f"شرکت: {job['company'] or '—'}",
-        f"موقعیت: {job['location'] or '—'}",
-        f"منبع: {job['source'] or '—'}",
-        f"لینک: {job['url'] or '—'}",
-        f"ایمیل تماس: {job['contact_email'] or '—'}",
-        f"امتیاز تطبیق: {fa_digits(job['score'])} از ۱۰۰",
-        f"تاریخ ثبت: {format_jalali(application['created_at'])}",
+        t("عنوان: {value}", value=job["title"]),
+        t("شرکت: {value}", value=job["company"] or "—"),
+        t("موقعیت: {value}", value=job["location"] or "—"),
+        t("منبع: {value}", value=job["source"] or "—"),
+        t("لینک: {value}", value=job["url"] or "—"),
+        t("ایمیل تماس: {value}", value=job["contact_email"] or "—"),
+        t("امتیاز تطبیق: {score} از ۱۰۰", score=_digits(job["score"])),
+        t("تاریخ ثبت: {value}", value=_jdate(application["created_at"])),
         "",
-        "مهارت‌های مشترک:",
-        "، ".join(application.get("job_matched_skills") or []) or "—",
+        t("مهارت‌های مشترک:"),
+        ("، " if _lang() == "fa" else ", ").join(application.get("job_matched_skills") or []) or "—",
         "",
-        "کلیدواژه‌های قابل تقویت:",
-        "، ".join(application.get("job_missing_keywords") or []) or "—",
+        t("کلیدواژه‌های قابل تقویت:"),
+        ("، " if _lang() == "fa" else ", ").join(application.get("job_missing_keywords") or []) or "—",
         "",
-        "شرح آگهی:",
+        t("شرح آگهی:"),
         job["description"][:8000],
         "",
         "—" * 30,
-        f"متقاضی: {profile.get('full_name', '')}",
+        t("متقاضی: {value}", value=profile.get("full_name", "")),
     ]
     return "\n".join(lines)
 
@@ -868,7 +959,7 @@ def send_application(application_id):
     if not application:
         abort(404)
     if application["status"] == "sent" and request.form.get("force") != "1":
-        flash("این درخواست قبلاً ارسال شده است.", "info")
+        flash(t("این درخواست قبلاً ارسال شده است."), "info")
         return redirect(url_for("application_detail", application_id=application_id))
     compose = {
         "to": request.form.get("to", "").strip(),
@@ -884,19 +975,19 @@ def send_application(application_id):
     if cover_path and cover_path.is_file():
         attachments.append((cover_path, "Cover-Letter.pdf"))
     if not attachments:
-        error = "فایل PDF رزومه یا کاور لتر پیدا نشد؛ ابتدا نسخه اختصاصی را بسازید."
+        error = t("فایل PDF رزومه یا کاور لتر پیدا نشد؛ ابتدا نسخه اختصاصی را بسازید.")
         return _application_view(application_id, compose, error), 400
     for doc in selected_docs:
         doc_path = db.UPLOADS_DIR / doc["stored_name"]
         if doc_path.is_file():
             attachments.append((doc_path, doc["original_name"] or doc_path.name))
     if not emailer.smtp_ready(g.settings):
-        error = "تنظیمات SMTP کامل نیست. ابتدا در تنظیمات، ایمیل فرستنده و سرور را پیکربندی کنید."
+        error = t("تنظیمات SMTP کامل نیست. ابتدا در تنظیمات، ایمیل فرستنده و سرور را پیکربندی کنید.")
         return _application_view(application_id, compose, error), 400
     try:
         emailer.send(g.settings, compose["to"], compose["subject"], compose["body"], attachments)
     except emailer.EmailError as exc:
-        return _application_view(application_id, compose, str(exc)), 400
+        return _application_view(application_id, compose, t(str(exc))), 400
     sent_files = [name for _, name in attachments]
     db.update_application(application_id, {
         "status": "sent",
@@ -907,7 +998,7 @@ def send_application(application_id):
         "sent_files": sent_files,
     })
     db.update_job(application["job_id"], {"status": "applied"})
-    flash("درخواست با موفقیت ارسال شد و در آرشیو ثبت گردید.", "success")
+    flash(t("درخواست با موفقیت ارسال شد و در آرشیو ثبت گردید."), "success")
     return redirect(url_for("application_detail", application_id=application_id))
 
 
@@ -920,7 +1011,7 @@ def delete_application_route(application_id):
     folder = db.GENERATED_DIR / f"job-{application['job_id']}"
     if folder.is_dir():
         shutil.rmtree(folder, ignore_errors=True)
-    flash("درخواست و فایل‌های آن حذف شد.", "success")
+    flash(t("درخواست و فایل‌های آن حذف شد."), "success")
     return redirect(url_for("applications_page"))
 
 
@@ -981,13 +1072,13 @@ def save_settings_route():
     section = request.form.get("section", "")
     if section == "ai":
         _save_ai_form(request.form)
-        flash("تنظیمات هوش مصنوعی ذخیره شد.", "success")
+        flash(t("تنظیمات هوش مصنوعی ذخیره شد."), "success")
         return redirect(url_for("settings_page") + "#ai")
     if section == "smtp":
         _save_smtp_form(request.form)
-        flash("تنظیمات ایمیل ذخیره شد.", "success")
+        flash(t("تنظیمات ایمیل ذخیره شد."), "success")
         return redirect(url_for("settings_page") + "#smtp")
-    flash("بخش تنظیمات نامعتبر است.", "error")
+    flash(t("بخش تنظیمات نامعتبر است."), "error")
     return redirect(url_for("settings_page"))
 
 
@@ -997,9 +1088,9 @@ def test_ai_connection():
     ok, message = ai.test_connection(_draft_settings(values))
     if ok:
         db.save_settings(values)
-        message = f"{message} تنظیمات ذخیره شد."
+        message = f"{t(message)} {t('تنظیمات ذخیره شد.')}"
     else:
-        message = f"{message} تنظیمات ذخیره نشد."
+        message = f"{t(message)} {t('تنظیمات ذخیره نشد.')}"
     flash(message, "success" if ok else "error")
     return redirect(url_for("settings_page") + "#ai")
 
@@ -1010,9 +1101,9 @@ def test_smtp_connection():
     ok, message = emailer.test_connection(_draft_settings(values))
     if ok:
         db.save_settings(values)
-        message = f"{message} تنظیمات ذخیره شد."
+        message = f"{t(message)} {t('تنظیمات ذخیره شد.')}"
     else:
-        message = f"{message} تنظیمات ذخیره نشد."
+        message = f"{t(message)} {t('تنظیمات ذخیره نشد.')}"
     flash(message, "success" if ok else "error")
     return redirect(url_for("settings_page") + "#smtp")
 
@@ -1049,7 +1140,7 @@ def api_fetch_job():
     payload = request.get_json(silent=True) or {}
     url = str(payload.get("url", "")).strip()
     if not url:
-        return jsonify({"error": "لینک آگهی را وارد کنید."}), 400
+        return jsonify({"error": t("لینک آگهی را وارد کنید.")}), 400
     try:
         data = jobsource.fetch_job_from_url(url)
     except jobsource.JobSourceError as exc:
@@ -1067,25 +1158,25 @@ def healthz():
 
 @app.errorhandler(400)
 def bad_request(error):
-    message = getattr(error, "description", "درخواست نامعتبر است.")
+    message = getattr(error, "description", t("درخواست نامعتبر است."))
     return render_template("error.html", code=400, message=message), 400
 
 
 @app.errorhandler(404)
 def not_found(error):
-    return render_template("error.html", code=404, message="صفحه یا فایل موردنظر پیدا نشد."), 404
+    return render_template("error.html", code=404, message=t("صفحه یا فایل موردنظر پیدا نشد.")), 404
 
 
 @app.errorhandler(RequestEntityTooLarge)
 def too_large(error):
     return render_template("error.html", code=413,
-                           message="حجم آپلود بیشتر از حد مجاز (۲۵ مگابایت) است."), 413
+                           message=t("حجم آپلود بیشتر از حد مجاز (۲۵ مگابایت) است.")), 413
 
 
 @app.errorhandler(500)
 def server_error(error):
     return render_template("error.html", code=500,
-                           message="خطای غیرمنتظره‌ای رخ داد. دوباره تلاش کنید."), 500
+                           message=t("خطای غیرمنتظره‌ای رخ داد. دوباره تلاش کنید.")), 500
 
 
 if __name__ == "__main__":

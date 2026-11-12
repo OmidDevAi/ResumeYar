@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="{{ lang }}" dir="{{ 'rtl' if rtl else 'ltr' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="theme-color" content="#0e2433">
-  <title>{% block title %}رزومه‌یار{% endblock %}</title>
+  <title>{% block title %}{{ t('رزومه‌یار') }}{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
   {% block head %}{% endblock %}
@@ -58,30 +58,30 @@
     <a class="brand" href="{{ url_for('dashboard') }}">
       <span class="brand-mark"><svg class="icon"><use href="#i-sparkles"></use></svg></span>
       <span class="brand-text">
-        <strong>رزومه‌یار</strong>
-        <small>دستیار هوشمند استخدام</small>
+        <strong>{{ t('رزومه‌یار') }}</strong>
+        <small>{{ t('دستیار هوشمند استخدام') }}</small>
       </span>
     </a>
 
-    <nav class="nav" aria-label="منوی اصلی">
-      <span class="nav-label">فضای کار</span>
+    <nav class="nav" aria-label="{{ t('منوی اصلی') }}">
+      <span class="nav-label">{{ t('فضای کار') }}</span>
       <a class="nav-item {{ 'active' if current_endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">
-        <svg class="icon"><use href="#i-home"></use></svg><span>داشبورد</span>
+        <svg class="icon"><use href="#i-home"></use></svg><span>{{ t('داشبورد') }}</span>
       </a>
       <a class="nav-item {{ 'active' if current_endpoint in ('profile_page',) }}" href="{{ url_for('profile_page') }}">
-        <svg class="icon"><use href="#i-user"></use></svg><span>پروفایل و مدارک</span>
+        <svg class="icon"><use href="#i-user"></use></svg><span>{{ t('پروفایل و مدارک') }}</span>
       </a>
       <a class="nav-item {{ 'active' if current_endpoint in ('jobs_page', 'job_detail') }}" href="{{ url_for('jobs_page') }}">
-        <svg class="icon"><use href="#i-briefcase"></use></svg><span>آگهی‌های شغلی</span>
+        <svg class="icon"><use href="#i-briefcase"></use></svg><span>{{ t('آگهی‌های شغلی') }}</span>
         {% if counts.new_jobs %}<span class="nav-badge">{{ counts.new_jobs | fadigits }}</span>{% endif %}
       </a>
       <a class="nav-item {{ 'active' if current_endpoint in ('applications_page', 'application_detail') }}" href="{{ url_for('applications_page') }}">
-        <svg class="icon"><use href="#i-file"></use></svg><span>درخواست‌ها</span>
+        <svg class="icon"><use href="#i-file"></use></svg><span>{{ t('درخواست‌ها') }}</span>
         {% if counts.drafts %}<span class="nav-badge is-gold">{{ counts.drafts | fadigits }}</span>{% endif %}
       </a>
-      <span class="nav-label">سیستم</span>
+      <span class="nav-label">{{ t('سیستم') }}</span>
       <a class="nav-item {{ 'active' if current_endpoint == 'settings_page' }}" href="{{ url_for('settings_page') }}">
-        <svg class="icon"><use href="#i-settings"></use></svg><span>تنظیمات</span>
+        <svg class="icon"><use href="#i-settings"></use></svg><span>{{ t('تنظیمات') }}</span>
       </a>
     </nav>
 
@@ -89,28 +89,31 @@
       <div class="ai-state {{ 'is-on' if ai_ready }}">
         <span class="pulse"></span>
         <div>
-          <strong>{{ 'هوش مصنوعی فعال' if ai_ready else 'موتور محلی فعال' }}</strong>
-          <small>{{ 'متن‌ها با API ساخته می‌شوند' if ai_ready else 'بدون نیاز به کلید API' }}</small>
+          <strong>{{ t('هوش مصنوعی فعال') if ai_ready else t('موتور محلی فعال') }}</strong>
+          <small>{{ t('متن‌ها با API ساخته می‌شوند') if ai_ready else t('بدون نیاز به کلید API') }}</small>
         </div>
       </div>
       <div class="privacy-chip">
         <svg class="icon"><use href="#i-shield"></use></svg>
-        <span>داده‌ها فقط روی این دستگاه ذخیره می‌شوند</span>
+        <span>{{ t('داده‌ها فقط روی این دستگاه ذخیره می‌شوند') }}</span>
       </div>
-      <span class="version">نسخه ۱.۰</span>
+      <span class="version">{{ t('نسخه ۱.۰') }}</span>
     </div>
   </aside>
 
   <div class="main">
     <header class="topbar">
-      <button class="icon-btn mobile-menu" type="button" data-sidebar-open aria-label="باز کردن منو">
+      <button class="icon-btn mobile-menu" type="button" data-sidebar-open aria-label="{{ t('باز کردن منو') }}">
         <svg class="icon"><use href="#i-menu"></use></svg>
       </button>
       <div class="page-head">
-        <span class="eyebrow">{% block eyebrow %}میز کار{% endblock %}</span>
+        <span class="eyebrow">{% block eyebrow %}{{ t('میز کار') }}{% endblock %}</span>
         <h1>{% block page_title %}{% endblock %}</h1>
       </div>
-      <div class="topbar-actions">{% block top_actions %}{% endblock %}</div>
+      <div class="topbar-actions">
+        <a class="lang-switch" href="{{ url_for('set_language', code=other_lang, next=request.full_path) }}" hreflang="{{ other_lang }}" lang="{{ other_lang }}">{{ languages[other_lang] }}</a>
+        {% block top_actions %}{% endblock %}
+      </div>
     </header>
 
     <main class="content" id="main">
@@ -123,7 +126,7 @@
               <svg class="icon"><use href="#i-{{ 'check-circle' if category == 'success' else 'alert' if category in ('error', 'warning') else 'info' }}"></use></svg>
             </span>
             <p>{{ message }}</p>
-            <button class="flash-close" type="button" aria-label="بستن">
+            <button class="flash-close" type="button" aria-label="{{ t('بستن') }}">
               <svg class="icon"><use href="#i-x"></use></svg>
             </button>
           </div>
@@ -135,8 +138,8 @@
     </main>
 
     <footer class="app-footer">
-      <span>رزومه‌یار · ارسال هدفمند، نه انبوه</span>
-      <span>فایل‌ها و اطلاعات شما محلی می‌مانند.</span>
+      <span>{{ t('رزومه‌یار · ارسال هدفمند، نه انبوه') }}</span>
+      <span>{{ t('فایل‌ها و اطلاعات شما محلی می‌مانند.') }}</span>
     </footer>
   </div>
 </div>
@@ -144,11 +147,12 @@
 <div class="busy" id="busy" hidden>
   <div class="busy-card">
     <span class="loader"></span>
-    <strong>در حال آماده‌سازی…</strong>
-    <small>ساخت متن اختصاصی و فایل‌های PDF ممکن است چند لحظه طول بکشد.</small>
+    <strong>{{ t('در حال آماده‌سازی…') }}</strong>
+    <small>{{ t('ساخت متن اختصاصی و فایل‌های PDF ممکن است چند لحظه طول بکشد.') }}</small>
   </div>
 </div>
 
+<script>window.RESUMEYAR_LANG = {{ lang | tojson }};</script>
 <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 {% block scripts %}{% endblock %}
 </body>

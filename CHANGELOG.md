@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Bilingual interface: a switch in the header flips the whole UI between Persian (RTL) and English (LTR). In English mode every label, flash message, status and confirm dialog is English only; dates use the Gregorian calendar and digits switch to Latin. The choice lives in the session, so nothing changes until you pick a language.
 - Native desktop window (pywebview + WebView2) instead of opening a browser tab; PDF downloads use the Windows save dialog.
 - "Show the file after generating" checkbox on the job page opens the new PDF inline, with download and send shortcuts.
 - PDF layout fixes for English and mixed-direction CVs: per-paragraph direction, RTL bullets, and non-overlapping date/title rows.

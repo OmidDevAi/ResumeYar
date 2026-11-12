@@ -253,6 +253,20 @@ button { cursor: pointer; }
   font-weight: 700;
 }
 .page-head h1 { font-size: clamp(22px, 2.3vw, 28px); letter-spacing: -0.3px; }
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.lang-switch:hover { border-color: var(--gold); color: var(--gold-strong); }
 .topbar-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
 .mobile-menu { display: none; }
 .content {
@@ -823,6 +837,7 @@ button { cursor: pointer; }
 .stat-icon.is-green { background: var(--emerald-soft); color: var(--emerald); }
 .stat-icon.is-navy { background: #e9e4d9; color: var(--navy); }
 .stat-icon .icon { width: 19px; height: 19px; }
+.stat-card div { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .stat-card strong { font-size: 24px; line-height: 1.2; letter-spacing: -0.5px; }
 .stat-card span { font-size: 11px; color: var(--muted); }
 .stat-card small { grid-column: 2; font-size: 9.5px; color: #9a948a; }

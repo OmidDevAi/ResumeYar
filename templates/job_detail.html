@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}{{ job.title }} · رزومه‌یار{% endblock %}
-{% block eyebrow %}تحلیل فرصت{% endblock %}
-{% block page_title %}جزئیات آگهی{% endblock %}
+{% block title %}{{ job.title }} · {{ t('رزومه‌یار') }}{% endblock %}
+{% block eyebrow %}{{ t('تحلیل فرصت') }}{% endblock %}
+{% block page_title %}{{ t('جزئیات آگهی') }}{% endblock %}
 {% block top_actions %}
   <a class="btn btn--ghost" href="{{ url_for('jobs_page') }}">
     <svg class="icon"><use href="#i-back"></use></svg>
-    بازگشت
+    {{ t('بازگشت') }}
   </a>
   {% if job.url %}
   <a class="btn btn--outline" href="{{ job.url }}" target="_blank" rel="noopener noreferrer">
     <svg class="icon"><use href="#i-external"></use></svg>
-    مشاهده آگهی اصلی
+    {{ t('مشاهده آگهی اصلی') }}
   </a>
   {% endif %}
 {% endblock %}
@@ -20,7 +20,7 @@
   <div class="score score--xl score--{{ 'high' if job.score >= 70 else 'mid' if job.score >= 40 else 'low' }}"
        style="--val: {{ job.score }}">
     <span>{{ job.score | fadigits }}</span>
-    <small>تطبیق</small>
+    <small>{{ t('تطبیق') }}</small>
   </div>
   <div class="job-hero-main">
     <div class="badge-row">
@@ -28,13 +28,13 @@
       {% if job.work_mode %}<span class="badge badge--soft">{{ WORK_MODES.get(job.work_mode, job.work_mode) }}</span>{% endif %}
       {% if job.employment_type %}<span class="badge badge--soft">{{ EMPLOYMENT_TYPES.get(job.employment_type, job.employment_type) }}</span>{% endif %}
       {% if job.source %}<span class="badge badge--soft">{{ job.source }}</span>{% endif %}
-      {% if application %}<span class="badge badge--app-{{ application.status }}">درخواست: {{ APP_STATUSES.get(application.status, application.status) }}</span>{% endif %}
+      {% if application %}<span class="badge badge--app-{{ application.status }}">{{ t('درخواست:') }} {{ APP_STATUSES.get(application.status, application.status) }}</span>{% endif %}
     </div>
     <h2>{{ job.title }}</h2>
     <div class="meta-line meta-line--wrap">
       {% if job.company %}<span><svg class="icon"><use href="#i-building"></use></svg>{{ job.company }}</span>{% endif %}
       {% if job.location %}<span><svg class="icon"><use href="#i-pin"></use></svg>{{ job.location }}</span>{% endif %}
-      <span><svg class="icon"><use href="#i-calendar"></use></svg>ثبت در {{ job.created_at | jdate }}</span>
+      <span><svg class="icon"><use href="#i-calendar"></use></svg>{{ t('ثبت در') }} {{ job.created_at | jdate }}</span>
       {% if job.contact_email %}<span><svg class="icon"><use href="#i-mail"></use></svg>{{ job.contact_email }}</span>{% endif %}
     </div>
     <div class="chip-row">
@@ -42,7 +42,7 @@
       <span class="chip chip--match">{{ skill }}</span>
       {% endfor %}
       {% if not job.matched_skills %}
-      <span class="chip chip--miss">هنوز مهارت مشترکی با پروفایل پیدا نشد</span>
+      <span class="chip chip--miss">{{ t('هنوز مهارت مشترکی با پروفایل پیدا نشد') }}</span>
       {% endif %}
     </div>
   </div>
@@ -53,8 +53,8 @@
     <section class="card">
       <div class="card-head">
         <div>
-          <span class="card-kicker">متن کامل</span>
-          <h3>شرح آگهی</h3>
+          <span class="card-kicker">{{ t('متن کامل') }}</span>
+          <h3>{{ t('شرح آگهی') }}</h3>
         </div>
         <span class="soft-icon"><svg class="icon"><use href="#i-doc"></use></svg></span>
       </div>
@@ -62,7 +62,7 @@
       {% if job.url %}
       <a class="inline-link" href="{{ job.url }}" target="_blank" rel="noopener noreferrer">
         <svg class="icon"><use href="#i-link"></use></svg>
-        مشاهده صفحه اصلی آگهی
+        {{ t('مشاهده صفحه اصلی آگهی') }}
         <svg class="icon"><use href="#i-external"></use></svg>
       </a>
       {% endif %}
@@ -71,14 +71,14 @@
     <section class="card">
       <div class="card-head">
         <div>
-          <span class="card-kicker">تحلیل هوشمند</span>
-          <h3>تطبیق پروفایل با آگهی</h3>
+          <span class="card-kicker">{{ t('تحلیل هوشمند') }}</span>
+          <h3>{{ t('تطبیق پروفایل با آگهی') }}</h3>
         </div>
         <span class="badge badge--soft">{{ job.match_notes }}</span>
       </div>
       <div class="analysis-grid">
         <div class="analysis-block analysis-block--match">
-          <h4><svg class="icon"><use href="#i-check-circle"></use></svg> مهارت‌های مشترک</h4>
+          <h4><svg class="icon"><use href="#i-check-circle"></use></svg> {{ t('مهارت‌های مشترک') }}</h4>
           {% if job.matched_skills %}
           <div class="chip-row chip-row--wrap">
             {% for skill in job.matched_skills %}
@@ -86,27 +86,27 @@
             {% endfor %}
           </div>
           {% else %}
-          <p class="muted-text">هنوز مهارت مشخصی از پروفایل شما در متن آگهی دیده نشده است.</p>
+          <p class="muted-text">{{ t('هنوز مهارت مشخصی از پروفایل شما در متن آگهی دیده نشده است.') }}</p>
           {% endif %}
         </div>
         <div class="analysis-block analysis-block--miss">
-          <h4><svg class="icon"><use href="#i-target"></use></svg> کلیدواژه‌های قابل تقویت</h4>
+          <h4><svg class="icon"><use href="#i-target"></use></svg> {{ t('کلیدواژه‌های قابل تقویت') }}</h4>
           {% if job.missing_keywords %}
           <div class="chip-row chip-row--wrap">
             {% for kw in job.missing_keywords %}
             <span class="chip chip--miss">{{ kw }}</span>
             {% endfor %}
           </div>
-          <p class="muted-text">این موارد در پروفایل شما دیده نشد؛ فقط در صورت تسلط واقعی، آن‌ها را اضافه کنید.</p>
+          <p class="muted-text">{{ t('این موارد در پروفایل شما دیده نشد؛ فقط در صورت تسلط واقعی، آن‌ها را اضافه کنید.') }}</p>
           {% else %}
-          <p class="muted-text">کلیدواژه مهمی جا نمانده است.</p>
+          <p class="muted-text">{{ t('کلیدواژه مهمی جا نمانده است.') }}</p>
           {% endif %}
         </div>
       </div>
       {% if completeness.percent < 60 %}
       <div class="notice notice--warning notice--inline">
         <svg class="icon"><use href="#i-alert"></use></svg>
-        <p>برای امتیاز دقیق‌تر، <a href="{{ url_for('profile_page') }}">پروفایل</a> را تکمیل کنید.</p>
+        <p>{{ t('برای امتیاز دقیق‌تر،') }} <a href="{{ url_for('profile_page') }}">{{ t('پروفایل') }}</a> {{ t('را تکمیل کنید.') }}</p>
       </div>
       {% endif %}
     </section>
@@ -114,19 +114,19 @@
     <section class="card">
       <div class="card-head">
         <div>
-          <span class="card-kicker">یادداشت شخصی</span>
-          <h3>نکته‌های شما درباره این فرصت</h3>
+          <span class="card-kicker">{{ t('یادداشت شخصی') }}</span>
+          <h3>{{ t('نکته‌های شما درباره این فرصت') }}</h3>
         </div>
         <span class="soft-icon"><svg class="icon"><use href="#i-edit"></use></svg></span>
       </div>
       <form method="post" action="{{ url_for('update_job_notes', job_id=job.id) }}" data-busy>
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label class="field">
-          <span>یادداشت</span>
-          <textarea name="notes" rows="3" placeholder="مثلاً: نیازمند مدرک بین‌المللی، حقوق موردنظر، تاریخ مهلت ارسال…">{{ job.notes }}</textarea>
+          <span>{{ t('یادداشت') }}</span>
+          <textarea name="notes" rows="3" placeholder="{{ t('مثلاً: نیازمند مدرک بین‌المللی، حقوق موردنظر، تاریخ مهلت ارسال…') }}">{{ job.notes }}</textarea>
         </label>
         <div class="form-actions">
-          <button class="btn btn--outline btn--sm" type="submit">ذخیره یادداشت</button>
+          <button class="btn btn--outline btn--sm" type="submit">{{ t('ذخیره یادداشت') }}</button>
         </div>
       </form>
     </section>
@@ -137,75 +137,75 @@
     <section class="card card--accent">
       <div class="card-head">
         <div>
-          <span class="card-kicker">نسخه اختصاصی</span>
-          <h3>{{ 'ارسال‌شده' if application.status == 'sent' else 'آماده بازبینی' }}</h3>
+          <span class="card-kicker">{{ t('نسخه اختصاصی') }}</span>
+          <h3>{{ t('ارسال‌شده') if application.status == 'sent' else t('آماده بازبینی') }}</h3>
         </div>
         <span class="soft-icon is-green"><svg class="icon"><use href="#i-file"></use></svg></span>
       </div>
       <p class="card-sub">
         {% if application.status == 'sent' %}
-        این درخواست در {{ application.sent_at | jdatetime }} ارسال شده است.
+        {{ t('این درخواست در') }} {{ application.sent_at | jdatetime }} {{ t('ارسال شده است.') }}
         {% else %}
-        رزومه و کاور لتر اختصاصی ساخته شده‌اند. متن‌ها را بازبینی کنید و در صورت آماده بودن ارسال کنید.
+        {{ t('رزومه و کاور لتر اختصاصی ساخته شده‌اند. متن‌ها را بازبینی کنید و در صورت آماده بودن ارسال کنید.') }}
         {% endif %}
       </p>
       <dl class="mini-dl">
-        <div><dt>زبان خروجی</dt><dd>{{ 'فارسی' if application.job_language == 'fa' else 'انگلیسی' }}</dd></div>
-        <div><dt>روش تولید</dt><dd>{{ 'هوش مصنوعی' if application.mode == 'ai' else 'موتور محلی' }}</dd></div>
-        <div><dt>تاریخ ساخت</dt><dd>{{ application.created_at | jdate }}</dd></div>
+        <div><dt>{{ t('زبان خروجی') }}</dt><dd>{{ t('فارسی') if application.job_language == 'fa' else t('انگلیسی') }}</dd></div>
+        <div><dt>{{ t('روش تولید') }}</dt><dd>{{ t('هوش مصنوعی') if application.mode == 'ai' else t('موتور محلی') }}</dd></div>
+        <div><dt>{{ t('تاریخ ساخت') }}</dt><dd>{{ application.created_at | jdate }}</dd></div>
       </dl>
       <a class="btn btn--primary btn--block" href="{{ url_for('application_detail', application_id=application.id) }}">
         <svg class="icon"><use href="#i-eye"></use></svg>
-        مشاهده و ارسال
+        {{ t('مشاهده و ارسال') }}
       </a>
       <div class="mini-note">
         <svg class="icon"><use href="#i-shield"></use></svg>
-        <span>ارسال فقط با تأیید شما انجام می‌شود.</span>
+        <span>{{ t('ارسال فقط با تأیید شما انجام می‌شود.') }}</span>
       </div>
     </section>
     {% else %}
     <section class="card card--accent">
       <div class="card-head">
         <div>
-          <span class="card-kicker">با یک کلیک</span>
-          <h3>ساخت نسخه اختصاصی</h3>
+          <span class="card-kicker">{{ t('با یک کلیک') }}</span>
+          <h3>{{ t('ساخت نسخه اختصاصی') }}</h3>
         </div>
         <span class="soft-icon is-gold"><svg class="icon"><use href="#i-sparkles"></use></svg></span>
       </div>
-      <p class="card-sub">خلاصه، ترتیب مهارت‌ها، کاور لتر و متن ایمیل بر اساس همین آگهی تنظیم می‌شود.</p>
+      <p class="card-sub">{{ t('خلاصه، ترتیب مهارت‌ها، کاور لتر و متن ایمیل بر اساس همین آگهی تنظیم می‌شود.') }}</p>
       <form method="post" action="{{ url_for('generate_application', job_id=job.id) }}" data-busy>
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label class="field">
-          <span>زبان خروجی</span>
+          <span>{{ t('زبان خروجی') }}</span>
           <select name="language">
-            <option value="fa" {{ 'selected' if language == 'fa' }}>فارسی</option>
-            <option value="en" {{ 'selected' if language == 'en' }}>انگلیسی</option>
+            <option value="fa" {{ 'selected' if language == 'fa' }}>{{ t('فارسی') }}</option>
+            <option value="en" {{ 'selected' if language == 'en' }}>{{ t('انگلیسی') }}</option>
           </select>
         </label>
         <div class="field">
-          <span>روش تولید</span>
+          <span>{{ t('روش تولید') }}</span>
           <div class="choice-stack">
             <label class="choice">
               <input type="radio" name="mode" value="auto" checked>
               <span class="choice-body">
-                <strong>خودکار (پیشنهادی)</strong>
-                <small>در صورت فعال بودن، از هوش مصنوعی و در غیر این صورت از موتور محلی استفاده می‌کند.</small>
+                <strong>{{ t('خودکار (پیشنهادی)') }}</strong>
+                <small>{{ t('در صورت فعال بودن، از هوش مصنوعی و در غیر این صورت از موتور محلی استفاده می‌کند.') }}</small>
               </span>
             </label>
             {% if ai_ready %}
             <label class="choice">
               <input type="radio" name="mode" value="ai">
               <span class="choice-body">
-                <strong>هوش مصنوعی</strong>
-                <small>متن دقیق‌تر و شخصی‌سازی‌شده‌تر، بر اساس پروفایل و آگهی.</small>
+                <strong>{{ t('هوش مصنوعی') }}</strong>
+                <small>{{ t('متن دقیق‌تر و شخصی‌سازی‌شده‌تر، بر اساس پروفایل و آگهی.') }}</small>
               </span>
             </label>
             {% endif %}
             <label class="choice">
               <input type="radio" name="mode" value="local">
               <span class="choice-body">
-                <strong>موتور محلی</strong>
-                <small>همه پردازش روی همین دستگاه انجام می‌شود.</small>
+                <strong>{{ t('موتور محلی') }}</strong>
+                <small>{{ t('همه پردازش روی همین دستگاه انجام می‌شود.') }}</small>
               </span>
             </label>
           </div>
@@ -213,19 +213,19 @@
         {% if not ai_ready %}
         <div class="mini-note">
           <svg class="icon"><use href="#i-ai"></use></svg>
-          <span>برای متن‌های هوشمندتر، <a href="{{ url_for('settings_page') }}#ai">هوش مصنوعی را فعال کنید</a>. فعلاً موتور محلی آماده است.</span>
+          <span>{{ t('برای متن‌های هوشمندتر،') }} <a href="{{ url_for('settings_page') }}#ai">{{ t('هوش مصنوعی را فعال کنید') }}</a>{{ t('. فعلاً موتور محلی آماده است.') }}</span>
         </div>
         {% endif %}
         <label class="preview-toggle">
           <input type="checkbox" name="show_file" value="1">
           <span>
-            <strong>نمایش فایل بعد از ساخت</strong>
-            <small>رزومه ساخته‌شده بلافاصله در همین پنجره باز می‌شود؛ دانلود و ارسال هم در همان صفحه هست.</small>
+            <strong>{{ t('نمایش فایل بعد از ساخت') }}</strong>
+            <small>{{ t('رزومه ساخته‌شده بلافاصله در همین پنجره باز می‌شود؛ دانلود و ارسال هم در همان صفحه هست.') }}</small>
           </span>
         </label>
         <button class="btn btn--gold btn--block" type="submit">
           <svg class="icon"><use href="#i-sparkles"></use></svg>
-          ساخت رزومه و کاور لتر
+          {{ t('ساخت رزومه و کاور لتر') }}
         </button>
       </form>
     </section>
@@ -234,8 +234,8 @@
     <section class="card">
       <div class="card-head">
         <div>
-          <span class="card-kicker">مدیریت</span>
-          <h3>وضعیت آگهی</h3>
+          <span class="card-kicker">{{ t('مدیریت') }}</span>
+          <h3>{{ t('وضعیت آگهی') }}</h3>
         </div>
       </div>
       <form method="post" action="{{ url_for('update_job_status', job_id=job.id) }}">
@@ -246,16 +246,16 @@
             <option value="{{ key }}" {{ 'selected' if job.status == key }}>{{ label }}</option>
             {% endfor %}
           </select>
-          <button class="btn btn--outline btn--sm" type="submit">ثبت</button>
+          <button class="btn btn--outline btn--sm" type="submit">{{ t('ثبت') }}</button>
         </div>
       </form>
       <div class="divider"></div>
       <form method="post" action="{{ url_for('delete_job_route', job_id=job.id) }}"
-            data-confirm="این آگهی و درخواست مرتبط با آن برای همیشه حذف شود؟">
+            data-confirm="{{ t('این آگهی و درخواست مرتبط با آن برای همیشه حذف شود؟') }}">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <button class="btn btn--danger-ghost btn--block btn--sm" type="submit">
           <svg class="icon"><use href="#i-trash"></use></svg>
-          حذف آگهی
+          {{ t('حذف آگهی') }}
         </button>
       </form>
     </section>

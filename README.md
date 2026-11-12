@@ -23,6 +23,7 @@ A local-first job-search assistant with a Persian-first interface. It keeps your
 | Optional email sending through SMTP | Working, needs your own account |
 | AI rewriting through an OpenAI-compatible API | Working, off by default, needs your own key |
 | Windows desktop app (PyInstaller) | Working |
+| Bilingual interface (Persian / English) | Working |
 | Windows installer (Inno Setup) | Working, built but not yet run on a clean machine |
 | Automated tests | Not started |
 | Tested on browsers other than Chrome | Not started |
@@ -36,6 +37,7 @@ A local-first job-search assistant with a Persian-first interface. It keeps your
 - **Tailored output**: a CV PDF and a cover letter generated for that specific posting, with a ZIP package for sending.
 - **Application tracker**: stages, notes, generated documents, status history.
 - **Persian and English content** in one profile, RTL-aware PDF output with Shaped Persian text.
+- **Bilingual interface**: switch the UI between Persian (RTL) and English (LTR) from the header. English mode shows English only, with Gregorian dates and Latin digits.
 - **Local storage**: SQLite and files under `data/`, nothing leaves the machine unless you enable SMTP or AI.
 
 ## Tech stack
