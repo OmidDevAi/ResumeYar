@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% block title %}درخواست‌ها · رزومه‌یار{% endblock %}
-{% block eyebrow %}آرشیو و پیگیری{% endblock %}
-{% block page_title %}درخواست‌ها{% endblock %}
+{% block title %}{{ t('درخواست‌ها') }} · {{ t('رزومه‌یار') }}{% endblock %}
+{% block eyebrow %}{{ t('آرشیو و پیگیری') }}{% endblock %}
+{% block page_title %}{{ t('درخواست‌ها') }}{% endblock %}
 {% block top_actions %}
   <a class="btn btn--primary" href="{{ url_for('jobs_page') }}#import">
     <svg class="icon"><use href="#i-plus"></use></svg>
-    آگهی جدید
+    {{ t('آگهی جدید') }}
   </a>
 {% endblock %}
 
 {% block content %}
 <div class="notice notice--info">
   <svg class="icon"><use href="#i-folder"></use></svg>
-  <p>هر درخواست، رزومه اختصاصی، کاور لتر، متن ایمیل و وضعیت ارسال را نگه می‌دارد. فایل‌ها را می‌توانید از همین صفحه دانلود کنید.</p>
+  <p>{{ t('هر درخواست، رزومه اختصاصی، کاور لتر، متن ایمیل و وضعیت ارسال را نگه می‌دارد. فایل‌ها را می‌توانید از همین صفحه دانلود کنید.') }}</p>
 </div>
 
 <div class="filter-tabs">
   <a class="filter-tab {{ 'is-active' if not status }}" href="{{ url_for('applications_page') }}">
-    همه <span>{{ counts.applications | fadigits }}</span>
+    {{ t('همه') }} <span>{{ counts.applications | fadigits }}</span>
   </a>
   <a class="filter-tab {{ 'is-active' if status == 'draft' }}" href="{{ url_for('applications_page', status='draft') }}">
-    در انتظار ارسال <span>{{ counts.drafts | fadigits }}</span>
+    {{ t('در انتظار ارسال') }} <span>{{ counts.drafts | fadigits }}</span>
   </a>
   <a class="filter-tab {{ 'is-active' if status == 'sent' }}" href="{{ url_for('applications_page', status='sent') }}">
-    ارسال‌شده <span>{{ counts.sent | fadigits }}</span>
+    {{ t('ارسال‌شده') }} <span>{{ counts.sent | fadigits }}</span>
   </a>
 </div>
 
@@ -39,36 +39,36 @@
       <div class="application-title">
         <h3><a href="{{ url_for('application_detail', application_id=app.id) }}">{{ app.job_title }}</a></h3>
         <span class="badge badge--app-{{ app.status }}">{{ APP_STATUSES.get(app.status, app.status) }}</span>
-        <span class="badge badge--soft">{{ 'هوش مصنوعی' if app.mode == 'ai' else 'موتور محلی' }}</span>
+        <span class="badge badge--soft">{{ t('هوش مصنوعی') if app.mode == 'ai' else t('موتور محلی') }}</span>
       </div>
       <div class="meta-line meta-line--wrap">
         {% if app.job_company %}<span><svg class="icon"><use href="#i-building"></use></svg>{{ app.job_company }}</span>{% endif %}
-        <span><svg class="icon"><use href="#i-calendar"></use></svg>ساخته‌شده {{ app.created_at | jdate }}</span>
+        <span><svg class="icon"><use href="#i-calendar"></use></svg>{{ t('ساخته‌شده') }} {{ app.created_at | jdate }}</span>
         {% if app.sent_at %}
-        <span><svg class="icon"><use href="#i-send"></use></svg>ارسال {{ app.sent_at | jdatetime }}</span>
+        <span><svg class="icon"><use href="#i-send"></use></svg>{{ t('ارسال') }} {{ app.sent_at | jdatetime }}</span>
         {% endif %}
       </div>
       {% if app.status == 'sent' %}
-      <p class="app-sent-line"><svg class="icon"><use href="#i-mail"></use></svg>به {{ app.sent_to }} · {{ app.sent_files | length | fadigits }} پیوست</p>
+      <p class="app-sent-line"><svg class="icon"><use href="#i-mail"></use></svg>{{ t('به') }} {{ app.sent_to }} · {{ app.sent_files | length | fadigits }}{{ t(' پیوست') }}</p>
       {% else %}
-      <p class="app-sent-line muted-text">نسخه اختصاصی آماده است؛ بازبینی کنید و پس از تأیید ارسال کنید.</p>
+      <p class="app-sent-line muted-text">{{ t('نسخه اختصاصی آماده است؛ بازبینی کنید و پس از تأیید ارسال کنید.') }}</p>
       {% endif %}
     </div>
     <div class="app-score-wrap">
       <div class="score score--sm score--{{ 'high' if app.job_score >= 70 else 'mid' if app.job_score >= 40 else 'low' }}"
            style="--val: {{ app.job_score }}"><span>{{ app.job_score | fadigits }}</span></div>
-      <small>امتیاز تطبیق</small>
+      <small>{{ t('امتیاز تطبیق') }}</small>
     </div>
     <div class="application-actions">
       <a class="btn btn--primary btn--sm" href="{{ url_for('application_detail', application_id=app.id) }}">
         <svg class="icon"><use href="#i-eye"></use></svg>
-        مشاهده
+        {{ t('مشاهده') }}
       </a>
       <div class="icon-actions">
-        <a class="icon-btn" href="{{ url_for('application_cv', application_id=app.id, download=1) }}" title="دانلود رزومه" aria-label="دانلود رزومه">
+        <a class="icon-btn" href="{{ url_for('application_cv', application_id=app.id, download=1) }}" title="{{ t('دانلود رزومه') }}" aria-label="{{ t('دانلود رزومه') }}">
           <svg class="icon"><use href="#i-download"></use></svg>
         </a>
-        <a class="icon-btn" href="{{ url_for('application_cover', application_id=app.id, download=1) }}" title="دانلود کاور لتر" aria-label="دانلود کاور لتر">
+        <a class="icon-btn" href="{{ url_for('application_cover', application_id=app.id, download=1) }}" title="{{ t('دانلود کاور لتر') }}" aria-label="{{ t('دانلود کاور لتر') }}">
           <svg class="icon"><use href="#i-mail"></use></svg>
         </a>
       </div>
@@ -79,11 +79,11 @@
 {% else %}
 <div class="empty">
   <span class="empty-icon"><svg class="icon"><use href="#i-file"></use></svg></span>
-  <h3>{% if status %}درخواستی در این وضعیت نیست{% else %}هنوز درخواستی نساخته‌اید{% endif %}</h3>
-  <p>از صفحه هر آگهی، یک نسخه اختصاصی از رزومه و کاور لتر بسازید. همه نسخه‌ها اینجا آرشیو می‌شوند.</p>
+  <h3>{% if status %}{{ t('درخواستی در این وضعیت نیست') }}{% else %}{{ t('هنوز درخواستی نساخته‌اید') }}{% endif %}</h3>
+  <p>{{ t('از صفحه هر آگهی، یک نسخه اختصاصی از رزومه و کاور لتر بسازید. همه نسخه‌ها اینجا آرشیو می‌شوند.') }}</p>
   <div class="empty-actions">
-    <a class="btn btn--primary" href="{{ url_for('jobs_page') }}">رفتن به آگهی‌ها</a>
-    {% if status %}<a class="btn btn--ghost" href="{{ url_for('applications_page') }}">نمایش همه</a>{% endif %}
+    <a class="btn btn--primary" href="{{ url_for('jobs_page') }}">{{ t('رفتن به آگهی‌ها') }}</a>
+    {% if status %}<a class="btn btn--ghost" href="{{ url_for('applications_page') }}">{{ t('نمایش همه') }}</a>{% endif %}
   </div>
 </div>
 {% endif %}

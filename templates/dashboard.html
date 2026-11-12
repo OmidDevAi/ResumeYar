@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}داشبورد · رزومه‌یار{% endblock %}
-{% block eyebrow %}نمای کلی{% endblock %}
-{% block page_title %}داشبورد{% endblock %}
+{% block title %}{{ t('داشبورد') }} · {{ t('رزومه‌یار') }}{% endblock %}
+{% block eyebrow %}{{ t('نمای کلی') }}{% endblock %}
+{% block page_title %}{{ t('داشبورد') }}{% endblock %}
 {% block top_actions %}
   <a class="btn btn--primary" href="{{ url_for('jobs_page') }}#import">
     <svg class="icon"><use href="#i-plus"></use></svg>
-    افزودن آگهی
+    {{ t('افزودن آگهی') }}
   </a>
 {% endblock %}
 
@@ -14,47 +14,46 @@
   <div class="hero-copy">
     <span class="hero-eyebrow">
       <svg class="icon"><use href="#i-zap"></use></svg>
-      از رزومه تا ارسال، در یک مسیر
+      {{ t('از رزومه تا ارسال، در یک مسیر') }}
     </span>
     <h2>
-      {% if profile.full_name %}سلام {{ profile.full_name }}{% else %}به رزومه‌یار خوش آمدید{% endif %}
+      {% if profile.full_name %}{{ t('سلام') }} {{ profile.full_name }}{% else %}{{ t('به رزومه‌یار خوش آمدید') }}{% endif %}
     </h2>
     <p>
-      رزومه و مدارک را یک‌بار ثبت کنید؛ برای هر آگهی، نسخه‌ای متناسب با همان نقش می‌سازیم و
-      متن ایمیل را هم آماده می‌کنیم. ارسال نهایی همیشه با تأیید شما انجام می‌شود.
+      {{ t('رزومه و مدارک را یک‌بار ثبت کنید؛ برای هر آگهی، نسخه‌ای متناسب با همان نقش می‌سازیم و متن ایمیل را هم آماده می‌کنیم. ارسال نهایی همیشه با تأیید شما انجام می‌شود.') }}
     </p>
     <div class="hero-actions">
       {% if completeness.percent < 70 %}
         <a class="btn btn--gold" href="{{ url_for('profile_page') }}">
           <svg class="icon"><use href="#i-user"></use></svg>
-          تکمیل پروفایل
+          {{ t('تکمیل پروفایل') }}
         </a>
       {% else %}
         <a class="btn btn--gold" href="{{ url_for('jobs_page') }}#import">
           <svg class="icon"><use href="#i-target"></use></svg>
-          شروع با یک آگهی
+          {{ t('شروع با یک آگهی') }}
         </a>
       {% endif %}
-      <a class="btn btn--ghost-light" href="#recent-jobs">آخرین آگهی‌ها</a>
+      <a class="btn btn--ghost-light" href="#recent-jobs">{{ t('آخرین آگهی‌ها') }}</a>
     </div>
   </div>
   <div class="hero-progress">
     <div class="score score--hero score--{{ 'high' if completeness.percent >= 75 else 'mid' if completeness.percent >= 40 else 'low' }}"
          style="--val: {{ completeness.percent }}">
-      <span>{{ completeness.percent | fadigits }}٪</span>
+      <span>{{ completeness.percent | fadigits }}{{ t('٪') }}</span>
     </div>
-    <strong>آمادگی پروفایل</strong>
-    <small>{{ completeness.done | fadigits }} از {{ completeness.total | fadigits }} مورد کامل است</small>
+    <strong>{{ t('آمادگی پروفایل') }}</strong>
+    <small>{{ completeness.done | fadigits }}{{ t(' از ') }}{{ completeness.total | fadigits }}{{ t(' مورد کامل است') }}</small>
     {% if completeness.missing %}
     <ul class="hero-todo">
       {% for item in completeness.missing[:3] %}
-      <li><svg class="icon"><use href="#i-alert"></use></svg>{{ item }}</li>
+      <li><svg class="icon"><use href="#i-alert"></use></svg>{{ item | tr }}</li>
       {% endfor %}
     </ul>
     {% else %}
     <div class="hero-complete">
       <svg class="icon"><use href="#i-check-circle"></use></svg>
-      پروفایل شما آماده است
+      {{ t('پروفایل شما آماده است') }}
     </div>
     {% endif %}
   </div>
@@ -63,23 +62,23 @@
 <section class="stat-grid">
   <a class="stat-card" href="{{ url_for('jobs_page') }}">
     <span class="stat-icon"><svg class="icon"><use href="#i-briefcase"></use></svg></span>
-    <div><strong>{{ counts.jobs | fadigits }}</strong><span>آگهی ذخیره‌شده</span></div>
-    <small>{{ counts.new_jobs | fadigits }} آگهی جدید</small>
+    <div><strong>{{ counts.jobs | fadigits }}</strong><span>{{ t('آگهی ذخیره‌شده') }}</span></div>
+    <small>{{ t('آگهی جدید') }} · {{ counts.new_jobs | fadigits }}</small>
   </a>
   <a class="stat-card" href="{{ url_for('applications_page', status='draft') }}">
     <span class="stat-icon is-gold"><svg class="icon"><use href="#i-edit"></use></svg></span>
-    <div><strong>{{ counts.drafts | fadigits }}</strong><span>در انتظار ارسال</span></div>
-    <small>نسخه اختصاصی آماده</small>
+    <div><strong>{{ counts.drafts | fadigits }}</strong><span>{{ t('در انتظار ارسال') }}</span></div>
+    <small>{{ t('نسخه اختصاصی آماده') }}</small>
   </a>
   <a class="stat-card" href="{{ url_for('applications_page', status='sent') }}">
     <span class="stat-icon is-green"><svg class="icon"><use href="#i-send"></use></svg></span>
-    <div><strong>{{ counts.sent | fadigits }}</strong><span>درخواست ارسال‌شده</span></div>
-    <small>ثبت‌شده در آرشیو</small>
+    <div><strong>{{ counts.sent | fadigits }}</strong><span>{{ t('درخواست ارسال‌شده') }}</span></div>
+    <small>{{ t('ثبت‌شده در آرشیو') }}</small>
   </a>
   <a class="stat-card" href="{{ url_for('profile_page') }}#documents">
     <span class="stat-icon is-navy"><svg class="icon"><use href="#i-folder"></use></svg></span>
-    <div><strong>{{ counts.documents | fadigits }}</strong><span>مدرک و فایل</span></div>
-    <small>رزومه و مدارک پیوست</small>
+    <div><strong>{{ counts.documents | fadigits }}</strong><span>{{ t('مدرک و فایل') }}</span></div>
+    <small>{{ t('رزومه و مدارک پیوست') }}</small>
   </a>
 </section>
 
@@ -87,10 +86,10 @@
   <section class="card" id="recent-jobs">
     <div class="card-head">
       <div>
-        <span class="card-kicker">فرصت‌ها</span>
-        <h3>آخرین آگهی‌ها</h3>
+        <span class="card-kicker">{{ t('فرصت‌ها') }}</span>
+        <h3>{{ t('آخرین آگهی‌ها') }}</h3>
       </div>
-      <a class="btn btn--ghost btn--sm" href="{{ url_for('jobs_page') }}">همه آگهی‌ها</a>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('jobs_page') }}">{{ t('همه آگهی‌ها') }}</a>
     </div>
     {% if recent_jobs %}
     <div class="job-list">
@@ -113,9 +112,9 @@
     {% else %}
     <div class="empty empty--compact">
       <span class="empty-icon"><svg class="icon"><use href="#i-briefcase"></use></svg></span>
-      <h4>هنوز آگهی‌ای اضافه نکرده‌اید</h4>
-      <p>لینک آگهی را وارد کنید یا متن آن را بچسبانید تا امتیاز تطبیق را ببینید.</p>
-      <a class="btn btn--primary btn--sm" href="{{ url_for('jobs_page') }}#import">افزودن اولین آگهی</a>
+      <h4>{{ t('هنوز آگهی‌ای اضافه نکرده‌اید') }}</h4>
+      <p>{{ t('لینک آگهی را وارد کنید یا متن آن را بچسبانید تا امتیاز تطبیق را ببینید.') }}</p>
+      <a class="btn btn--primary btn--sm" href="{{ url_for('jobs_page') }}#import">{{ t('افزودن اولین آگهی') }}</a>
     </div>
     {% endif %}
   </section>
@@ -123,8 +122,8 @@
   <section class="card">
     <div class="card-head">
       <div>
-        <span class="card-kicker">مسیر شما</span>
-        <h3>قدم‌های پیشنهادی</h3>
+        <span class="card-kicker">{{ t('مسیر شما') }}</span>
+        <h3>{{ t('قدم‌های پیشنهادی') }}</h3>
       </div>
     </div>
     <ol class="steps">
@@ -139,7 +138,7 @@
     </ol>
     <div class="tip-box">
       <svg class="icon"><use href="#i-info"></use></svg>
-      <p>کیفیت خروجی به پروفایل شما وابسته است؛ تجربه‌ها را با دستاوردهای واقعی و قابل اندازه‌گیری بنویسید.</p>
+      <p>{{ t('کیفیت خروجی به پروفایل شما وابسته است؛ تجربه‌ها را با دستاوردهای واقعی و قابل اندازه‌گیری بنویسید.') }}</p>
     </div>
   </section>
 </div>
@@ -148,10 +147,10 @@
   <section class="card">
     <div class="card-head">
       <div>
-        <span class="card-kicker">آرشیو</span>
-        <h3>درخواست‌های اخیر</h3>
+        <span class="card-kicker">{{ t('آرشیو') }}</span>
+        <h3>{{ t('درخواست‌های اخیر') }}</h3>
       </div>
-      <a class="btn btn--ghost btn--sm" href="{{ url_for('applications_page') }}">آرشیو کامل</a>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('applications_page') }}">{{ t('آرشیو کامل') }}</a>
     </div>
     {% if recent_apps %}
     <div class="app-mini-list">
@@ -160,7 +159,7 @@
         <span class="file-badge"><svg class="icon"><use href="#i-file"></use></svg></span>
         <span class="app-mini-main">
           <strong>{{ app.job_title }}</strong>
-          <small>{{ app.job_company or 'شرکت ثبت نشده' }} · {{ app.updated_at | jdate }}</small>
+          <small>{{ app.job_company or t('شرکت ثبت نشده') }} · {{ app.updated_at | jdate }}</small>
         </span>
         <span class="badge badge--app-{{ app.status }}">{{ APP_STATUSES.get(app.status, app.status) }}</span>
       </a>
@@ -169,8 +168,8 @@
     {% else %}
     <div class="empty empty--compact">
       <span class="empty-icon"><svg class="icon"><use href="#i-doc"></use></svg></span>
-      <h4>درخواستی ساخته نشده</h4>
-      <p>از صفحه هر آگهی، رزومه و کاور لتر اختصاصی بسازید.</p>
+      <h4>{{ t('درخواستی ساخته نشده') }}</h4>
+      <p>{{ t('از صفحه هر آگهی، رزومه و کاور لتر اختصاصی بسازید.') }}</p>
     </div>
     {% endif %}
   </section>
@@ -178,30 +177,30 @@
   <section class="card">
     <div class="card-head">
       <div>
-        <span class="card-kicker">میان‌بر</span>
-        <h3>دسترسی سریع</h3>
+        <span class="card-kicker">{{ t('میان‌بر') }}</span>
+        <h3>{{ t('دسترسی سریع') }}</h3>
       </div>
     </div>
     <div class="quick-grid">
       <a class="quick-tile" href="{{ url_for('jobs_page') }}#discover">
         <span class="quick-icon"><svg class="icon"><use href="#i-zap"></use></svg></span>
-        <strong>کشف آگهی</strong>
-        <small>دریافت از فیدهای ریموت</small>
+        <strong>{{ t('کشف آگهی') }}</strong>
+        <small>{{ t('دریافت از فیدهای ریموت') }}</small>
       </a>
       <a class="quick-tile" href="{{ url_for('profile_page') }}#cv">
         <span class="quick-icon"><svg class="icon"><use href="#i-upload"></use></svg></span>
-        <strong>بارگذاری رزومه</strong>
-        <small>خواندن اطلاعات از فایل</small>
+        <strong>{{ t('بارگذاری رزومه') }}</strong>
+        <small>{{ t('خواندن اطلاعات از فایل') }}</small>
       </a>
       <a class="quick-tile" href="{{ url_for('settings_page') }}#smtp">
         <span class="quick-icon"><svg class="icon"><use href="#i-mail"></use></svg></span>
-        <strong>تنظیم ایمیل</strong>
-        <small>SMTP برای ارسال نهایی</small>
+        <strong>{{ t('تنظیم ایمیل') }}</strong>
+        <small>{{ t('SMTP برای ارسال نهایی') }}</small>
       </a>
       <a class="quick-tile" href="{{ url_for('profile_page') }}#documents">
         <span class="quick-icon"><svg class="icon"><use href="#i-folder"></use></svg></span>
-        <strong>مدارک من</strong>
-        <small>مدارک تحصیلی و گواهی‌ها</small>
+        <strong>{{ t('مدارک من') }}</strong>
+        <small>{{ t('مدارک تحصیلی و گواهی‌ها') }}</small>
       </a>
     </div>
   </section>

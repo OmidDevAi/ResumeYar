@@ -4,6 +4,35 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
+  const LANG = window.RESUMEYAR_LANG === 'en' ? 'en' : 'fa';
+  const STRINGS = {
+    fa: {
+      extractEmpty: 'ابتدا لینک آگهی را وارد کنید.',
+      readingLink: 'در حال خواندن لینک…',
+      checkingPage: 'صفحه آگهی در حال بررسی است…',
+      readFailed: 'خواندن این لینک ممکن نشد.',
+      filled: 'اطلاعات از لینک خوانده شد. پیش از ذخیره، متن و عنوان را بازبینی کنید.',
+      prefilled: 'اطلاعات صفحه خوانده شد، اما فیلدها از قبل پر بودند. متن آگهی را کنترل کنید.',
+      timeout: 'زمان خواندن لینک طولانی شد. متن آگهی را دستی وارد کنید.',
+      failed: 'خواندن لینک ناموفق بود.',
+      copied: 'کپی شد',
+      copyFailed: 'کپی نشد',
+    },
+    en: {
+      extractEmpty: 'Enter the job link first.',
+      readingLink: 'Reading the link…',
+      checkingPage: 'Checking the job page…',
+      readFailed: 'This link could not be read.',
+      filled: 'Details read from the link. Review the text and title before saving.',
+      prefilled: 'The page was read, but the fields were already filled. Check the job text.',
+      timeout: 'Reading the link took too long. Enter the job text manually.',
+      failed: 'Reading the link failed.',
+      copied: 'Copied',
+      copyFailed: 'Copy failed',
+    },
+  };
+  const s = (key) => (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.fa[key];
+
   /* ---------- sidebar ---------- */
   const setSidebar = (open) => {
     const sidebar = $('#sidebar');
@@ -75,11 +104,14 @@
   });
 
   const formatSize = (bytes) => {
-    if (!bytes) return '۰ بایت';
-    const units = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'];
+    const units = LANG === 'en'
+      ? ['B', 'KB', 'MB', 'GB']
+      : ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'];
+    if (!bytes) return LANG === 'en' ? '0 B' : '۰ بایت';
     const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
     const value = bytes / Math.pow(1024, index);
-    return `${value.toLocaleString('fa-IR', { maximumFractionDigits: 1 })} ${units[index]}`;
+    const locale = LANG === 'en' ? 'en-US' : 'fa-IR';
+    return `${value.toLocaleString(locale, { maximumFractionDigits: 1 })} ${units[index]}`;
   };
 
   /* ---------- repeaters (experience / education) ---------- */
@@ -248,15 +280,15 @@
       const urlInput = $('#job-url');
       const url = urlInput ? urlInput.value.trim() : '';
       if (!url) {
-        setStatus('ابتدا لینک آگهی را وارد کنید.', 'error');
+        setStatus(s('extractEmpty'), 'error');
         if (urlInput) urlInput.focus();
         return;
       }
 
       const original = extractButton.innerHTML;
       extractButton.disabled = true;
-      extractButton.textContent = 'در حال خواندن لینک…';
-      setStatus('صفحه آگهی در حال بررسی است…');
+      extractButton.textContent = s('readingLink');
+      setStatus(s('checkingPage'));
 
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), 35000);
@@ -273,7 +305,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(data.error || 'خواندن این لینک ممکن نشد.');
+          throw new Error(data.error || s('readFailed'));
         }
 
         let filled = 0;
@@ -288,14 +320,14 @@
         }
 
         if (filled) {
-          setStatus('اطلاعات از لینک خوانده شد. پیش از ذخیره، متن و عنوان را بازبینی کنید.', 'ok');
+          setStatus(s('filled'), 'ok');
         } else {
-          setStatus('اطلاعات صفحه خوانده شد، اما فیلدها از قبل پر بودند. متن آگهی را کنترل کنید.', 'ok');
+          setStatus(s('prefilled'), 'ok');
         }
       } catch (error) {
         const message = error.name === 'AbortError'
-          ? 'زمان خواندن لینک طولانی شد. متن آگهی را دستی وارد کنید.'
-          : (error.message || 'خواندن لینک ناموفق بود.');
+          ? s('timeout')
+          : (error.message || s('failed'));
         setStatus(message, 'error');
       } finally {
         window.clearTimeout(timer);
@@ -337,9 +369,9 @@
         document.execCommand('copy');
         helper.remove();
       }
-      finish('کپی شد');
+      finish(s('copied'));
     } catch (error) {
-      finish('کپی نشد');
+      finish(s('copyFailed'));
     }
   });
   /* ---------- pdf showcase ---------- */
