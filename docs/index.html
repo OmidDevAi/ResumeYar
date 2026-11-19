@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ResumeYar — local-first job-search assistant</title>
+<meta name="description" content="Parse your CV, score job matches, generate a tailored CV and cover letter, and track every application. Everything stays on your own machine.">
+<meta property="og:title" content="ResumeYar">
+<meta property="og:description" content="A local-first job-search assistant with a Persian-first interface.">
+<meta property="og:image" content="screenshot.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23172b45'/%3E%3Cpath d='M20 44V20h12a9 9 0 0 1 0 18h-8' stroke='%23d8b45e' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="brand" href="#top">
+      <span class="mark">R</span>
+      <span>ResumeYar</span>
+    </a>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#run">Run it</a>
+      <a class="gh" href="https://github.com/OmidDevAi/ResumeYar">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <p class="kicker">Local-first · Work in progress</p>
+      <h1>Your job search,<br>kept on your own machine.</h1>
+      <p class="lede">
+        ResumeYar reads your CV once, scores every posting you throw at it,
+        writes a CV and a cover letter for that specific job, and tracks what
+        you already sent. No account, no cloud, no data leaving the computer.
+      </p>
+      <p class="fa" lang="fa" dir="rtl">
+        رزومه‌یار: دستیار جست‌وجوی کار با رابط فارسی. پروفایل و رزومه در یک جا
+        می‌ماند و همه چیز روی سیستم خودتان ذخیره می‌شود.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/OmidDevAi/ResumeYar">Get the code</a>
+        <a class="btn ghost" href="#run">Run it locally</a>
+      </div>
+    </div>
+    <figure class="shot">
+      <img src="screenshot.png" alt="ResumeYar dashboard in Persian, right-to-left layout with a navy and gold theme" width="1280" height="756">
+      <figcaption>The dashboard, Persian interface. The same screens switch to English from the header.</figcaption>
+    </figure>
+  </section>
+
+  <section class="strip">
+    <div class="wrap strip-in">
+      <div><strong>Flask + SQLite</strong><span>One Python process, one database file</span></div>
+      <div><strong>RTL-safe PDFs</strong><span>Shaped Persian text in generated documents</span></div>
+      <div><strong>Your own key</strong><span>AI rewriting is optional and off by default</span></div>
+    </div>
+  </section>
+
+  <section id="how" class="wrap section">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li>
+        <span class="num">1</span>
+        <h3>Set up your profile once</h3>
+        <p>Upload a PDF, DOCX or TXT CV and the parser fills in experiences, education, skills and links. Everything it gets wrong can be edited by hand.</p>
+      </li>
+      <li>
+        <span class="num">2</span>
+        <h3>Bring in a job posting</h3>
+        <p>Paste a URL or the raw text. ResumeYar extracts the title, company, requirements and language, then scores the match and lists the gaps.</p>
+      </li>
+      <li>
+        <span class="num">3</span>
+        <h3>Send something tailored</h3>
+        <p>One click produces a CV PDF and a cover letter aimed at that posting, packaged in a ZIP. The application lands in the tracker with its status and notes.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="features" class="wrap section">
+    <h2>What is in the box</h2>
+    <div class="grid">
+      <article>
+        <h3>Profile and CV parsing</h3>
+        <p>Structured profile fields with a manual edit path for every parsed value.</p>
+      </article>
+      <article>
+        <h3>Match analysis</h3>
+        <p>Keyword and skill coverage between your profile and the posting, with the missing items stated plainly.</p>
+      </article>
+      <article>
+        <h3>Tailored documents</h3>
+        <p>CV and cover letter per posting, generated to PDF with correct Persian shaping and bidirectional text.</p>
+      </article>
+      <article>
+        <h3>Application tracker</h3>
+        <p>Stages, status history, notes and generated files for every application in one board.</p>
+      </article>
+      <article>
+        <h3>Two languages</h3>
+        <p>Persian and English content in one profile. The interface switches between Persian, right to left, and English, left to right.</p>
+      </article>
+      <article>
+        <h3>Desktop build</h3>
+        <p>A native Windows window around the same app, with an executable and an installer script.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="privacy">
+    <div class="wrap privacy-in">
+      <h2>Nothing leaves the machine</h2>
+      <p>
+        Profile, CVs, generated files and the database live in a single <code>data/</code> folder
+        next to the app. The only times anything goes out is when you enable email sending
+        with your own SMTP account, or turn on the optional AI rewriting with your own API key.
+      </p>
+      <ul class="checks">
+        <li>SQLite database and uploaded files in <code>data/</code>, git-ignored</li>
+        <li>Session signing key generated locally</li>
+        <li>No telemetry, no analytics, no remote service</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="run" class="wrap section">
+    <h2>Run it</h2>
+    <p class="sub">Python 3.11 or newer on Windows, Linux or macOS.</p>
+    <pre><code><span class="c"># create a virtual environment and install</span>
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+
+<span class="c"># start the app on http://127.0.0.1:5533</span>
+python app.py</code></pre>
+    <p class="sub">For the native window instead of a browser tab:</p>
+    <pre><code>pip install -r desktop/requirements_desktop.txt
+python desktop/launcher.py</code></pre>
+    <p class="sub">
+      Windows users can also build <code>Resumeyar.exe</code> and an installer with
+      <code>desktop\build_windows.bat</code>. Details in the repository.
+    </p>
+  </section>
+
+  <section class="status wrap">
+    <h2>Status</h2>
+    <p>
+      v0.3, active development. Working: profile, parsing, match scoring, tailored PDFs,
+      tracker, bilingual interface, desktop build. Not started: automated tests, browsers
+      other than Chrome. Interfaces and database schema may change between versions.
+    </p>
+  </section>
+
+</main>
+
+<footer class="bar foot">
+  <div class="wrap bar-in">
+    <span>ResumeYar — a personal project by <a href="https://github.com/OmidDevAi">Omid Rezapour</a></span>
+    <nav>
+      <a href="https://github.com/OmidDevAi/ResumeYar">Repository</a>
+      <a href="https://github.com/OmidDevAi/ResumeYar/blob/main/LICENSE">MIT License</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
